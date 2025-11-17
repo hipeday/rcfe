@@ -1,7 +1,15 @@
 [package]
+authors = ["Jixiang Liu <jixiangup@gmail.com>"]
 name = "rcfe"
 version = "0.1.0"
 edition = "2024"
+description = "RCFE is a Rust Client for ETCD V3."
+documentation = "https://docs.rs/rcfe"
+homepage = "https://github.com/hipeday/rcfe"
+keywords = ["etcd", "client", "etcdv3", "gRPC"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/hipeday/rcfe"
 
 [lib]
 [dependencies]
