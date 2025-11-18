@@ -11,3 +11,34 @@ The name "RCFE" stands for "Rust Client for ETCD".
 
 - [ ] Basic KV operations (get, put, delete)
    - [X] Range Get
+
+## Usage
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rcfe = "<version>"
+```
+
+Replace `<version>` with the latest version of RCFE.
+
+```rust
+use rcfe::{ClientFactory, DefaultClient, Error};
+
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+  let client_options = rcfe::ClientOptions::builder()
+          .endpoints(vec!["http://localhost:2379"])
+          .build();
+
+  let client = rcfe::DefaultClientFactory::new().create(client_options).await?;
+  
+  // Get a value by key
+  let response = kv_client.range(ByteSequence::from("greeting")).await?;
+  
+  println!("Received response: {:?}", response);
+  
+  Ok(())
+}
+```
