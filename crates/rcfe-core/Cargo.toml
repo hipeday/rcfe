@@ -2,6 +2,12 @@
 name = "rcfe-core"
 version.workspace = true
 edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
 
 [dependencies]
 thiserror.workspace = true
