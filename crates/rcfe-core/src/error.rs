@@ -19,4 +19,8 @@ pub enum Error {
     /// Illegal argument error
     #[error("Illegal argument: {0}")]
     IllegalArgument(String),
+    
+    /// Bytes sequence parsing error
+    #[error("Byte sequence parsing error")]
+    ByteSequenceParseError,
 }

@@ -1,30 +1,32 @@
-use rcfe::{Client, ClientFactory, ClientOptions, DefaultClientFactory, KVClient};
+mod common;
 
+use common::get_client;
+use rcfe::{Client, KVClient};
+
+/// Test client factory by performing a KV operation
+/// # Test keys
+/// - "foo" -> "bar"
+/// - "greeting" -> "Hello, etcd"
+/// - "greetinh" -> "Hello, etcd"
+/// - "greetini" -> "Hello, etcd"
 #[tokio::test]
 async fn test_factory() -> Result<(), rcfe::Error> {
-    // Build client options
-    let client_options = ClientOptions::builder()
-        .endpoints(vec!["http://191.168.0.250:2379"])
-        .build();
-
-    // Create a client using the DefaultClientFactory
-    let client = DefaultClientFactory::new().create(client_options).await?;
+    let client = get_client().await?;
 
     // Use the client to perform a KV operation
     let mut kv_client = client.get_kv_client();
 
     // Get the value for a specific key
-    let response = kv_client.range("greeting").await?;
+    let response = kv_client.range_with_str("greeting").await?;
 
-    println!("{:#?}", response);
+    let kvs = response.into_inner().kvs;
 
-    for item in response.into_inner().kvs {
-        println!(
-            "Key: {}, Value: {}",
-            String::from_utf8_lossy(&item.key),
-            String::from_utf8_lossy(&item.value)
-        );
-    }
+    let expected = ("greeting".as_bytes(), "Hello, etcd".as_bytes());
+
+    assert_eq!(kvs.len(), 1);
+
+    assert_eq!(kvs[0].key, expected.0);
+    assert_eq!(kvs[0].value, expected.1);
 
     Ok(())
 }

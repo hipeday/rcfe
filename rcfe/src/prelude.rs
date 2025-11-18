@@ -1,4 +1,5 @@
 pub use rcfe_core::{
+    ByteSequence,
     client::{Client},
     kv::{KVClient},
     error::Error,
