@@ -4,6 +4,10 @@ RCFE is a Rust client library for interacting with ETCD V3, a distributed key-va
 
 The name "RCFE" stands for "Rust Client for ETCD".
 
+> [!WARNING]
+> This project is still in its early stages of development. APIs may change without notice. Use at your own risk.
+
 ## Features
 
-- do something
+- [ ] Basic KV operations (get, put, delete)
+   - [X] Range Get
