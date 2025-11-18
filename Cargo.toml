@@ -1,23 +1,33 @@
-[package]
-authors = ["Jixiang Liu <jixiangup@gmail.com>"]
-name = "rcfe"
-version = "0.1.0"
+[workspace]
+resolver = "2"
+members = [
+    "rcfe", # Main etcd client library
+    "crates/rcfe-core", # Core library for RCFE functionality
+    "crates/rcfe-test", # Test utilities and integration tests
+]
+
+[workspace.package]
+rust-version = "1.89.0"
+version = "0.1.1"
+keywords = ["etcd", "client", "etcdv3", "gRPC"]
+categories = ["network-programming", "asynchronous", "grpc", "etcd"]
 edition = "2024"
-description = "RCFE is a Rust Client for ETCD V3."
+description = "An asynchronous etcd v3 client library for Rust built on gRPC."
 documentation = "https://docs.rs/rcfe"
 homepage = "https://github.com/hipeday/rcfe"
-keywords = ["etcd", "client", "etcdv3", "gRPC"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/hipeday/rcfe"
 
-[lib]
-[dependencies]
+[workspace.dependencies]
+# Local workspace dependencies
+rcfe-core = { path = "crates/rcfe-core", version = "0.1.1" }
+rcfe = { path = "rcfe", version = "0.1.1" }
+
+# External dependencies
 tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
 prost = "0.14.1"
 tonic-prost = "0.14.2"
 tonic = "0.14.2"
 thiserror = "2.0.17"
-
-[build-dependencies]
 tonic-prost-build = "0.14.2"

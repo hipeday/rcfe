@@ -1,0 +1,17 @@
+[package]
+name = "rcfe"
+rust-version.workspace = true
+version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+rcfe-core.workspace = true
+tonic = "0.14.2"

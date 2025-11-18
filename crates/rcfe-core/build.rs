@@ -1,5 +1,7 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_prost_build::configure().compile_protos(
+    tonic_prost_build::configure()
+        .build_server(false)
+        .compile_protos(
         &[
             "proto/rpc.proto",
             "proto/kv.proto",
@@ -9,5 +11,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ],
         &["proto"],
     )?;
+
     Ok(())
 }

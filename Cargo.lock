@@ -568,7 +568,15 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "rcfe"
-version = "0.1.0"
+version = "0.1.1"
+dependencies = [
+ "rcfe-core",
+ "tonic",
+]
+
+[[package]]
+name = "rcfe-core"
+version = "0.1.1"
 dependencies = [
  "prost",
  "thiserror",
@@ -576,6 +584,14 @@ dependencies = [
  "tonic",
  "tonic-prost",
  "tonic-prost-build",
+]
+
+[[package]]
+name = "rcfe-test"
+version = "0.1.1"
+dependencies = [
+ "rcfe",
+ "tokio",
 ]
 
 [[package]]

@@ -1,0 +1,16 @@
+[package]
+name = "rcfe-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+tonic.workspace = true
+prost.workspace = true
+tonic-prost.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+
+[build-dependencies]
+tonic-prost-build.workspace = true
