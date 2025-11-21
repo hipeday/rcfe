@@ -308,3 +308,103 @@ async fn test_delete() -> Result<(), Error> {
     assert_eq!(delete_range_response.deleted, 1);
     Ok(())
 }
+
+/// Test delete with prefix
+/// # Test keys
+/// - "greeting" -> "Hello, etcd"
+/// - "greetinh" -> "Hello, etcd"
+/// - "greetini" -> "Hello, etcd"
+#[tokio::test]
+async fn test_delete_with_prefix() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+    let delete_response = kv_client
+        .delete_with_prefix(ByteSequence::from("greet"))
+        .await?;
+    let delete_range_response = delete_response.into_inner();
+    assert_eq!(delete_range_response.deleted, 3);
+    Ok(())
+}
+
+/// Test delete all
+/// # Test keys
+/// - (none)
+#[tokio::test]
+async fn test_delete_all() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+    let delete_response = kv_client.delete_all().await?;
+    let delete_range_response = delete_response.into_inner();
+    assert!(delete_range_response.deleted >= 0);
+    Ok(())
+}
+
+/// Test build delete request
+#[tokio::test]
+async fn test_build_delete_request() -> Result<(), Error> {
+    let client = get_client().await?;
+    let kv_client = client.get_kv_client();
+    let key = ByteSequence::from("test_key");
+    let request = kv_client.build_delete_request(key.clone(), None, None);
+    assert_eq!(request.key, key.as_bytes());
+    assert_eq!(request.range_end, vec![]);
+    assert_eq!(request.prev_kv, false);
+    Ok(())
+}
+
+/// Test build compact request
+#[tokio::test]
+async fn test_build_compact_request() -> Result<(), Error> {
+    let client = get_client().await?;
+    let kv_client = client.get_kv_client();
+    let revision: i64 = 42;
+    let request = kv_client.build_compact_request(revision, None);
+    assert_eq!(request.revision, revision);
+    assert_eq!(request.physical, false);
+    Ok(())
+}
+
+/// Test compact with request
+/// ### Tips
+/// - Get the current revision before compaction to ensure the target revision exists.
+/// - Use range any key (can be an empty key) to get the current revision.
+#[tokio::test]
+async fn test_compact_with_request() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+
+    let response = kv_client.range(ByteSequence::from("rockfe")).await?;
+    let current_revision = response.into_inner().header.unwrap().revision;
+    let compact_request = kv_client.build_compact_request(current_revision, None);
+    let response = kv_client.compact_with_request(compact_request).await?;
+    let _compact_response = response.into_inner();
+
+    Ok(())
+}
+
+/// Test compact
+/// ### Tips
+/// - Get the current revision before compaction to ensure the target revision exists.
+/// - Use range any key (can be an empty key) to get the current revision.
+#[tokio::test]
+async fn test_compact() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+
+    // put an key to ensure there is at least one revision
+    let put_response = kv_client
+        .put(ByteSequence::from("rockfe"), ByteSequence::from("rocks"))
+        .await?;
+    let _put_resp = put_response.into_inner();
+
+    let response = kv_client.range(ByteSequence::from("rockfe")).await?;
+    let current_revision = response.into_inner().header.unwrap().revision;
+    let response = kv_client.compact(current_revision).await?;
+    let _compact_response = response.into_inner();
+
+    // then delete the key
+    let delete_response = kv_client.delete(ByteSequence::from("rockfe")).await?;
+    let _delete_resp = delete_response.into_inner();
+
+    Ok(())
+}

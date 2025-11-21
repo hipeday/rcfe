@@ -218,6 +218,30 @@ pub trait KVClient {
         self.delete_with_request(request).await
     }
 
+    /// Performs a delete operation for all keys with the specified prefix.
+    /// # Arguments
+    /// * `prefix` - The prefix to delete.
+    /// # Returns
+    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete
+    /// results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the delete operation fails.
+    async fn delete_with_prefix(&mut self, prefix: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
+        let range_end = prefix.next();
+        let request = self.build_delete_request(prefix, Some(range_end), None);
+        self.delete_with_request(request).await
+    }
+
+    /// Performs a delete operation for all keys.
+    /// # Returns
+    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the delete operation fails.
+    async fn delete_all(&mut self) -> Result<Response<DeleteRangeResponse>, Error> {
+        let request = self.build_delete_request(ByteSequence::empty(), Some(ByteSequence::empty()), None);
+        self.delete_with_request(request).await
+    }
+
     /// Performs a delete operation for the specified key.
     /// # Arguments
     /// * `key` - The key to delete.
@@ -229,6 +253,30 @@ pub trait KVClient {
         &mut self,
         request: crate::etcdserverpb::DeleteRangeRequest,
     ) -> Result<Response<DeleteRangeResponse>, Error>;
+
+    /// Performs a compaction operation for the specified revision.
+    /// # Arguments
+    /// * `revision` - The revision to compact.
+    /// # Returns
+    /// * `Result<Response<CompactionResponse>, Error>` - The response containing the compaction results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the compaction operation fails.
+    async fn compact(&mut self, revision: i64) -> Result<Response<crate::etcdserverpb::CompactionResponse>, Error> {
+        let request = self.build_compact_request(revision, None);
+        self.compact_with_request(request).await
+    }
+
+    /// Performs a compaction operation for the specified revision.
+    /// # Arguments
+    /// * `revision` - The revision to compact.
+    /// # Returns
+    /// * `Result<Response<CompactionResponse>, Error>` - The response containing the compaction results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the compaction operation fails.
+    async fn compact_with_request(
+        &mut self,
+        request: crate::etcdserverpb::CompactionRequest,
+    ) -> Result<Response<crate::etcdserverpb::CompactionResponse>, Error>;
 
     /// Builds a RangeRequest with the specified parameters.
     /// # Arguments
@@ -392,6 +440,30 @@ pub trait KVClient {
 
         if let Some(pk) = prev_kv {
             request.prev_kv = pk;
+        }
+
+        request
+    }
+
+    /// Builds a CompactionRequest with the specified parameters.
+    /// # Arguments
+    /// * `revision` - The revision to compact.
+    /// * `physical` - Whether to perform a physical compaction (optional).
+    /// # Returns
+    /// * `CompactionRequest` - The constructed CompactionRequest.
+    /// Returns a CompactionRequest constructed with the provided parameters.
+    fn build_compact_request(
+        &self,
+        revision: i64,
+        physical: Option<bool>,
+    ) -> crate::etcdserverpb::CompactionRequest {
+        let mut request = crate::etcdserverpb::CompactionRequest {
+            revision,
+            ..Default::default()
+        };
+
+        if let Some(p) = physical {
+            request.physical = p;
         }
 
         request
