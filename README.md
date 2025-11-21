@@ -9,8 +9,11 @@ The name "RCFE" stands for "Rust Client for ETCD".
 
 ## Features
 
-- [ ] Basic KV operations (get, put, delete)
+- [ ] Basic KV operations (get, put, delete, transactions)
    - [X] Range Get
+   - [X] Put
+   - [X] Delete
+   - [ ] Transactions
 
 ## Usage
 
