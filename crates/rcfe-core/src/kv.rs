@@ -1,6 +1,6 @@
 use tonic::Response;
 use crate::{error::Error, etcdserverpb::RangeResponse, ByteSequence};
-use crate::etcdserverpb::RangeRequest;
+use crate::etcdserverpb::{DeleteRangeResponse, RangeRequest};
 
 /// KVClient defines the interface for interacting with the key-value store.
 /// It provides methods to perform range queries with various options.
@@ -177,6 +177,14 @@ pub trait KVClient {
         request: RangeRequest,
     ) -> Result<Response<RangeResponse>, Error>;
 
+    /// Performs a put operation for the specified key and value.
+    /// # Arguments
+    /// * `key` - The key to put.
+    /// * `value` - The value to put.
+    /// # Returns
+    /// * `Result<Response<PutResponse>, Error>` - The response containing the put results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the put operation fails.
     async fn put(
         &mut self,
         key: ByteSequence,
@@ -197,6 +205,30 @@ pub trait KVClient {
         &mut self,
         request: crate::etcdserverpb::PutRequest,
     ) -> Result<Response<crate::etcdserverpb::PutResponse>, Error>;
+
+    /// Performs a delete operation for the specified key.
+    /// # Arguments
+    /// * `key` - The key to delete.
+    /// # Returns
+    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the delete operation fails.
+    async fn delete(&mut self, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
+        let request = self.build_delete_request(key, None, None);
+        self.delete_with_request(request).await
+    }
+
+    /// Performs a delete operation for the specified key.
+    /// # Arguments
+    /// * `key` - The key to delete.
+    /// # Returns
+    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the delete operation fails.
+    async fn delete_with_request(
+        &mut self,
+        request: crate::etcdserverpb::DeleteRangeRequest,
+    ) -> Result<Response<DeleteRangeResponse>, Error>;
 
     /// Builds a RangeRequest with the specified parameters.
     /// # Arguments
@@ -330,6 +362,36 @@ pub trait KVClient {
 
         if let Some(il) = ignore_lease {
             request.ignore_lease = il;
+        }
+
+        request
+    }
+
+    /// Builds a DeleteRangeRequest with the specified parameters.
+    /// # Arguments
+    /// * `key` - The key to delete.
+    /// * `range_end` - The end of the range to delete (optional).
+    /// * `prev_kv` - Whether to return the previous key-value pairs (optional).
+    /// # Returns
+    /// * `DeleteRangeRequest` - The constructed DeleteRangeRequest.
+    /// Returns a DeleteRangeRequest constructed with the provided parameters.
+    fn build_delete_request(
+        &self,
+        key: ByteSequence,
+        range_end: Option<ByteSequence>,
+        prev_kv: Option<bool>,
+    ) -> crate::etcdserverpb::DeleteRangeRequest {
+        let mut request = crate::etcdserverpb::DeleteRangeRequest {
+            key: key.as_bytes().to_vec(),
+            ..Default::default()
+        };
+
+        if let Some(re) = range_end {
+            request.range_end = re.as_bytes().to_vec();
+        }
+
+        if let Some(pk) = prev_kv {
+            request.prev_kv = pk;
         }
 
         request

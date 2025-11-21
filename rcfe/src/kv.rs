@@ -4,7 +4,7 @@ use rcfe_core::{
 };
 
 use tonic::{Response, transport::Channel};
-use rcfe_core::etcdserverpb::{PutRequest, PutResponse};
+use rcfe_core::etcdserverpb::{DeleteRangeRequest, DeleteRangeResponse, PutRequest, PutResponse};
 
 #[derive(Clone)]
 pub struct DefaultKVClient {
@@ -32,6 +32,10 @@ impl KVClient for DefaultKVClient {
 
     async fn put_with_request(&mut self, request: PutRequest) -> Result<Response<PutResponse>, Error> {
         Ok(self.inner.put(request).await?)
+    }
+
+    async fn delete_with_request(&mut self, request: DeleteRangeRequest) -> Result<Response<DeleteRangeResponse>, Error> {
+        Ok(self.inner.delete_range(request).await?)
     }
 
     fn get_options(&self) -> &KVOptions {

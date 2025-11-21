@@ -272,3 +272,39 @@ async fn test_put_with_request() -> Result<(), Error> {
     assert_eq!(kvs[0].value, value.as_bytes());
     Ok(())
 }
+
+/// Test delete with request
+/// # Test keys
+/// - "foo" -> "bar"
+/// - "greeting" -> "Hello, etcd"
+/// - "greetinh" -> "Hello, etcd"
+/// - "greetini" -> "Hello, etcd"
+/// - "rcfe" -> "rocks"
+#[tokio::test]
+async fn test_delete_with_request() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+    let key = ByteSequence::from("rcfe");
+    let delete_request = kv_client.build_delete_request(key.clone(), None, None);
+    let delete_response = kv_client.delete_with_request(delete_request).await?;
+    let delete_range_response = delete_response.into_inner();
+    assert_eq!(delete_range_response.deleted, 1);
+    Ok(())
+}
+
+/// Test delete
+/// # Test keys
+/// - "foo" -> "bar"
+/// - "greeting" -> "Hello, etcd"
+/// - "greetinh" -> "Hello, etcd"
+/// - "greetini" -> "Hello, etcd"
+#[tokio::test]
+async fn test_delete() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+    let key = ByteSequence::from("foo");
+    let delete_response = kv_client.delete(key.clone()).await?;
+    let delete_range_response = delete_response.into_inner();
+    assert_eq!(delete_range_response.deleted, 1);
+    Ok(())
+}
