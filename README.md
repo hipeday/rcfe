@@ -26,6 +26,14 @@ rcfe = "<version>"
 
 Replace `<version>` with the latest version of RCFE.
 
+Or use the following command:
+
+```bash
+cargo add rcfe
+```
+
+Here is a simple example of how to use RCFE to connect to an ETCD server and perform a basic key-value operation:
+
 ```rust
 use rcfe::{ClientFactory, DefaultClient, Error};
 
