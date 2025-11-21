@@ -165,6 +165,39 @@ pub trait KVClient {
         self.range_with_request(request).await
     }
 
+    /// Performs a range query using a pre-constructed RangeRequest.
+    /// # Arguments
+    /// * `request` - The RangeRequest to use for the query.
+    /// # Returns
+    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the range operation fails.
+    async fn range_with_request(
+        &mut self,
+        request: RangeRequest,
+    ) -> Result<Response<RangeResponse>, Error>;
+
+    async fn put(
+        &mut self,
+        key: ByteSequence,
+        value: ByteSequence,
+    ) -> Result<Response<crate::etcdserverpb::PutResponse>, Error> {
+        let request = self.build_put_request(key, value, None, None, None, None);
+        self.put_with_request(request).await
+    }
+
+    /// Performs a put operation using a pre-constructed PutRequest.
+    /// # Arguments
+    /// * `request` - The PutRequest to use for the operation.
+    /// # Returns
+    /// * `Result<Response<PutResponse>, Error>` - The response containing the put results or an error if the operation fails.
+    /// # Errors
+    /// * Returns an `Error` if the put operation fails.
+    async fn put_with_request(
+        &mut self,
+        request: crate::etcdserverpb::PutRequest,
+    ) -> Result<Response<crate::etcdserverpb::PutResponse>, Error>;
+
     /// Builds a RangeRequest with the specified parameters.
     /// # Arguments
     /// * `key` - The key to query (optional).
@@ -257,17 +290,50 @@ pub trait KVClient {
         request
     }
 
-    /// Performs a range query using a pre-constructed RangeRequest.
+    /// Builds a PutRequest with the specified parameters.
     /// # Arguments
-    /// * `request` - The RangeRequest to use for the query.
+    /// * `key` - The key to put.
+    /// * `value` - The value to put.
+    /// * `lease` - The lease ID to associate with the key (optional).
+    /// * `prev_kv` - Whether to return the previous key-value pair (optional).
+    /// * `ignore_value` - Whether to ignore the value in the put operation (optional).
+    /// * `ignore_lease` - Whether to ignore the lease in the put operation (optional).
     /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_with_request(
-        &mut self,
-        request: RangeRequest,
-    ) -> Result<Response<RangeResponse>, Error>;
+    /// * `PutRequest` - The constructed PutRequest.
+    /// Returns a PutRequest constructed with the provided parameters.
+    fn build_put_request(
+        &self,
+        key: ByteSequence,
+        value: ByteSequence,
+        lease: Option<i64>,
+        prev_kv: Option<bool>,
+        ignore_value: Option<bool>,
+        ignore_lease: Option<bool>,
+    ) -> crate::etcdserverpb::PutRequest {
+        let mut request = crate::etcdserverpb::PutRequest {
+            key: key.as_bytes().to_vec(),
+            value: value.as_bytes().to_vec(),
+            ..Default::default()
+        };
+
+        if let Some(l) = lease {
+            request.lease = l;
+        }
+
+        if let Some(pk) = prev_kv {
+            request.prev_kv = pk;
+        }
+
+        if let Some(iv) = ignore_value {
+            request.ignore_value = iv;
+        }
+
+        if let Some(il) = ignore_lease {
+            request.ignore_lease = il;
+        }
+
+        request
+    }
 
     /// Retrieves the KV options associated with this client.
     /// # Returns

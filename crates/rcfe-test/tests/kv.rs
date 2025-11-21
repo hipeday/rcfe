@@ -219,3 +219,56 @@ async fn test_range_with_request() -> Result<(), Error> {
     assert_eq!(kvs[0].value, expected.1);
     Ok(())
 }
+
+#[tokio::test]
+async fn test_build_put_request() -> Result<(), Error> {
+    let client = get_client().await?;
+
+    let kv_client = client.get_kv_client();
+
+    let key = ByteSequence::from("test_key");
+    let value = ByteSequence::from("test_value");
+
+    let request = kv_client.build_put_request(key.clone(), value.clone(), None, None, None, None);
+
+    assert_eq!(request.key, key.as_bytes());
+    assert_eq!(request.value, value.as_bytes());
+    assert_eq!(request.lease, 0);
+    assert_eq!(request.prev_kv, false);
+
+    Ok(())
+}
+
+/// Test range query with options
+/// # Test keys
+/// - "foo" -> "bar"
+/// - "greeting" -> "Hello, etcd"
+/// - "greetinh" -> "Hello, etcd"
+/// - "greetini" -> "Hello, etcd"
+#[tokio::test]
+async fn test_put_with_request() -> Result<(), Error> {
+    let client = get_client().await?;
+
+    let mut kv_client = client.get_kv_client();
+
+    let key = ByteSequence::from("rcfe");
+    let value = ByteSequence::from("rocks");
+
+    let request = kv_client.build_put_request(key.clone(), value.clone(), None, None, None, None);
+
+    let response = kv_client.put_with_request(request).await?;
+
+    let put_response = response.into_inner();
+
+    // Since the key is new, the previous_kv should be None
+    assert!(put_response.prev_kv.is_none());
+
+    // Clean up by deleting the test key
+    let response = kv_client.range(key.clone()).await?;
+
+    let kvs = response.into_inner().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].key, key.as_bytes());
+    assert_eq!(kvs[0].value, value.as_bytes());
+    Ok(())
+}
