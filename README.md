@@ -1,5 +1,9 @@
 # RCFE - Rust Client for ETCD V3.
 
+[![Crates.io](https://img.shields.io/crates/v/rcfe.svg)](https://crates.io/crates/rcfe)
+[![Docs.rs](https://docs.rs/rcfe/badge.svg)](https://docs.rs/rcfe)
+[![License](https://img.shields.io/crates/l/rcfe.svg)](https://crates.io/crates/rcfe)
+
 RCFE is a Rust client library for interacting with ETCD V3, a distributed key-value store that provides a reliable way to store data across a cluster of machines. This library aims to provide a simple and efficient interface for Rust developers to work with ETCD.
 
 The name "RCFE" stands for "Rust Client for ETCD".
@@ -66,3 +70,7 @@ async fn main() -> Result<(), Error> {
   Ok(())
 }
 ```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
