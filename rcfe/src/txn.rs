@@ -1,24 +1,23 @@
 use rcfe_core::{
     error::Error,
-    etcdserverpb::kv_client::KvClient,
-    etcdserverpb::{Compare, RequestOp},
-    etcdserverpb::{TxnRequest, TxnResponse},
+    etcdserverpb::{TxnRequest, TxnResponse, kv_client::KvClient},
+    options::txn::{compare::Compare, op::RequestOp},
     txn::Txn,
 };
 use tonic::{Response, async_trait, transport::Channel};
 
 pub struct DefaultTxn {
     /// The list of comparisons to evaluate. like Txn.is
-    compares: Vec<Compare>,
+    when_compares: Vec<Compare>,
 
     /// The list of operations to execute if all comparisons succeed. like Txn.then
     then_ops: Vec<RequestOp>,
 
     /// The list of operations to execute if any comparison fails. like Txn.els
-    else_ops: Vec<RequestOp>,
+    otherwise_ops: Vec<RequestOp>,
 
     seen_then: bool,
-    seen_else: bool,
+    seen_otherwise: bool,
     kv_client: KvClient<Channel>,
 }
 
@@ -26,18 +25,18 @@ impl DefaultTxn {
     pub fn new(kv_client: KvClient<Channel>) -> Self {
         DefaultTxn {
             kv_client,
-            compares: Vec::new(),
+            when_compares: Vec::new(),
             then_ops: Vec::new(),
-            else_ops: Vec::new(),
+            otherwise_ops: Vec::new(),
             seen_then: false,
-            seen_else: false,
+            seen_otherwise: false,
         }
     }
 }
 
 #[async_trait]
 impl Txn for DefaultTxn {
-    fn is<I, P>(&mut self, compares: I) -> Result<&mut Self, Error>
+    fn when<I, P>(&mut self, compares: I) -> Result<&mut Self, Error>
     where
         I: IntoIterator<Item = P>,
         P: Into<Compare>,
@@ -48,13 +47,13 @@ impl Txn for DefaultTxn {
             ));
         }
 
-        if self.seen_else {
+        if self.seen_otherwise {
             return Err(Error::InvalidTxnSequence(
-                "Cannot add comparisons after 'else' clause!".into(),
+                "Cannot add comparisons after 'otherwise' clause!".into(),
             ));
         }
         for compare in compares {
-            self.compares.push(compare.into());
+            self.when_compares.push(compare.into());
         }
         Ok(self)
     }
@@ -64,9 +63,9 @@ impl Txn for DefaultTxn {
         I: IntoIterator<Item = P>,
         P: Into<RequestOp>,
     {
-        if self.seen_else {
+        if self.seen_otherwise {
             Err(Error::InvalidTxnSequence(
-                "Cannot add 'then' clause after 'else' clause!".into(),
+                "Cannot add 'then' clause after 'otherwise' clause!".into(),
             ))
         } else {
             self.seen_then = true;
@@ -77,14 +76,14 @@ impl Txn for DefaultTxn {
         }
     }
 
-    fn els<I, P>(&mut self, ops: I) -> Result<&mut Self, Error>
+    fn otherwise<I, P>(&mut self, ops: I) -> Result<&mut Self, Error>
     where
         I: IntoIterator<Item = P>,
         P: Into<RequestOp>,
     {
-        self.seen_else = true;
+        self.seen_otherwise = true;
         for op in ops {
-            self.else_ops.push(op.into());
+            self.otherwise_ops.push(op.into());
         }
         Ok(self)
     }
@@ -94,16 +93,16 @@ impl Txn for DefaultTxn {
         // and return the response. This is a placeholder implementation.
         let mut txn_request = TxnRequest::default();
 
-        if !self.compares.is_empty() {
-            txn_request.compare = self.compares.clone();
+        if !self.when_compares.is_empty() {
+            txn_request.compare = self.when_compares.iter().cloned().map(|c| c.into()).collect();
         }
 
         if !self.then_ops.is_empty() {
-            txn_request.success = self.then_ops.clone();
+            txn_request.success = self.then_ops.iter().cloned().map(|c| c.into()).collect();
         }
 
-        if !self.else_ops.is_empty() {
-            txn_request.failure = self.else_ops.clone();
+        if !self.otherwise_ops.is_empty() {
+            txn_request.failure = self.otherwise_ops.iter().cloned().map(|c| c.into()).collect();
         }
 
         // Send txn_request to etcd server and get response

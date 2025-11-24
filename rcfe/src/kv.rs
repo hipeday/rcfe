@@ -1,15 +1,23 @@
 use rcfe_core::{
     ByteSequence,
     error::Error,
-    etcdserverpb::RangeResponse,
-    etcdserverpb::kv_client::KvClient,
+    etcdserverpb::{
+        RangeResponse,
+        kv_client::KvClient,
+        DeleteRangeResponse,
+        PutResponse
+    },
     kv::KVClient,
-    options::{get::GetOptions, kv::KVOptions},
+    options::{
+        get::GetOptions,
+        kv::KVOptions,
+        delete::DeleteOptions,
+        put::PutOptions
+    },
+    txn::Txn
 };
 use tonic::{Response, transport::Channel};
-use rcfe_core::etcdserverpb::{DeleteRangeResponse, PutResponse};
-use rcfe_core::options::delete::DeleteOptions;
-use rcfe_core::options::put::PutOptions;
+use crate::DefaultTxn;
 
 #[derive(Clone)]
 pub struct DefaultKVClient {
@@ -28,6 +36,10 @@ impl DefaultKVClient {
 
 #[tonic::async_trait]
 impl KVClient for DefaultKVClient {
+    fn txn(&mut self) -> impl Txn {
+        DefaultTxn::new(self.inner.clone())
+    }
+
     async fn delete_with_options(&mut self, key: ByteSequence, options: DeleteOptions) -> Result<Response<DeleteRangeResponse>, Error> {
         let request = options.to_request(&key);
         Ok(self.inner.delete_range(request).await?)

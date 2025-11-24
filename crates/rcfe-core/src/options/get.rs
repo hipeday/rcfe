@@ -122,7 +122,7 @@ impl GetOptions {
         };
         etcdserverpb::RangeRequest {
             key: key.as_bytes().to_vec(),
-            range_end: end_key.bytes,
+            range_end: end_key.inner,
             limit: self.limit,
             revision: self.revision,
             sort_order: self.sort_order as i32,

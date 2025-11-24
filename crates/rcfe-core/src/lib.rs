@@ -40,12 +40,12 @@ const INCREMENT_BYTE: u8 = 0x01; // Increment by 1
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug)]
 pub struct ByteSequence {
-    bytes: Vec<u8>, // A vector to hold the byte sequence
+    inner: Vec<u8>, // A vector to hold the byte sequence
 }
 
 impl ByteSequence {
     pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes
+        &self.inner
     }
 
     /// Creates an empty ByteSequence.
@@ -56,7 +56,7 @@ impl ByteSequence {
     /// ```
     pub fn empty() -> Self {
         ByteSequence {
-            bytes: EMPTY_BYTE_SEQUENCE_VALUE,
+            inner: EMPTY_BYTE_SEQUENCE_VALUE,
         }
     }
 
@@ -90,17 +90,17 @@ impl ByteSequence {
     /// assert_eq!(next_seq.as_bytes(), ByteSequence::empty().as_bytes());
     /// ```
     pub fn next(&self) -> Self {
-        if self.bytes.is_empty() {
+        if self.inner.is_empty() {
             return ByteSequence::empty();
         }
 
-        let mut end = self.bytes.clone();
+        let mut end = self.inner.clone();
         // Increment the last byte
         for i in (0..end.len()).rev() {
             if end[i] != MAX_BYTE {
                 end[i] = end[i].wrapping_add(INCREMENT_BYTE); // +1
                 end.truncate(i + 1);
-                return ByteSequence { bytes: end };
+                return ByteSequence { inner: end };
             }
             // If the byte is MAX_BYTE continue to the previous byte
         }
@@ -109,14 +109,14 @@ impl ByteSequence {
     }
 
     pub fn to_vec(&self) -> Vec<u8> {
-        self.bytes.clone()
+        self.inner.clone()
     }
 }
 
 impl From<&str> for ByteSequence {
     fn from(value: &str) -> Self {
         ByteSequence {
-            bytes: value.as_bytes().to_vec(),
+            inner: value.as_bytes().to_vec(),
         }
     }
 }
@@ -124,21 +124,27 @@ impl From<&str> for ByteSequence {
 impl From<String> for ByteSequence {
     fn from(value: String) -> Self {
         ByteSequence {
-            bytes: value.as_bytes().to_vec(),
+            inner: value.as_bytes().to_vec(),
         }
     }
 }
 
 impl From<Vec<u8>> for ByteSequence {
     fn from(value: Vec<u8>) -> Self {
-        ByteSequence { bytes: value }
+        ByteSequence { inner: value }
     }
 }
 
 impl From<&[u8]> for ByteSequence {
     fn from(value: &[u8]) -> Self {
         ByteSequence {
-            bytes: value.to_vec(),
+            inner: value.to_vec(),
         }
+    }
+}
+
+impl Into<Vec<u8>> for ByteSequence {
+    fn into(self) -> Vec<u8> {
+        self.inner
     }
 }

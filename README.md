@@ -18,7 +18,7 @@ The name "RCFE" stands for "Rust Client for ETCD".
    - [X] Range Get
    - [X] Put
    - [X] Delete
-   - [ ] Transactions
+   - [X] Transactions
    - [ ] Compact
 - [ ] Lease management
   - [ ] Grant lease

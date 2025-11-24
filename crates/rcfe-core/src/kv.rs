@@ -3,6 +3,7 @@ use crate::{
     error::Error,
     etcdserverpb::{DeleteRangeResponse, PutResponse, RangeResponse},
     options::{delete::DeleteOptions, get::GetOptions, kv::KVOptions, put::PutOptions},
+    txn::Txn,
 };
 use tonic::Response;
 
@@ -10,6 +11,36 @@ use tonic::Response;
 /// It provides methods to perform range queries with various options.
 #[tonic::async_trait]
 pub trait KVClient {
+    /// Creates a new transaction associated with this KV client.
+    /// # Returns
+    /// * `impl Txn` - An implementation of the Txn trait for performing transactions
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::txn::Txn;
+    ///
+    /// fn example<KV: KVClient>(kv_client: &mut KV) -> impl Txn {
+    ///     kv_client.txn()
+    /// }
+    fn txn(&mut self) -> impl Txn;
+
+    /// Deletes a key-value pair from the store.
+    /// # Arguments
+    /// * `key` - The key to delete.
+    /// # Returns
+    /// * `Result<Response<etcdserverpb::DeleteRangeResponse>, error::Error>` - The response containing the delete result or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::ByteSequence;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::DeleteRangeResponse;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
+    ///     kv_client.delete(key).await
+    /// }
+    /// ```
     async fn delete(&mut self, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
         self.delete_with_options(key, DeleteOptions::default())
             .await
