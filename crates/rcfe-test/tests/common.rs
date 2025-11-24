@@ -48,6 +48,8 @@ pub async fn get_client() -> Result<DefaultClient, Error> {
         .endpoints(vec![get_endpoint()])
         .build();
 
-    let client = rcfe::DefaultClientFactory::new().create(client_options).await?;
+    let client = rcfe::DefaultClientFactory::new()
+        .create(client_options)
+        .await?;
     Ok(client)
 }

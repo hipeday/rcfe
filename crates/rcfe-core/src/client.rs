@@ -1,7 +1,4 @@
-use crate::{
-    kv::KVClient,
-    options::client::ClientOptions,
-};
+use crate::{kv::KVClient, options::client::ClientOptions};
 
 /// Client trait defining the interface for a client.
 /// Implementors must provide methods to retrieve client options and a key-value client.
@@ -27,7 +24,6 @@ use crate::{
 /// let kv_client = my_client.get_kv_client();
 /// ```
 pub trait Client {
-
     /// Get a reference to the client options.
     /// # Returns
     /// A reference to the `ClientOptions`.

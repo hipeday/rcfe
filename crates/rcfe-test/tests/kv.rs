@@ -1,410 +1,413 @@
 mod common;
 
-use rcfe::{ByteSequence, Client, Error, KVClient};
+use rcfe::{ByteSequence, Client, DeleteOptions, Error, GetOptions, KVClient, PutOptions};
+use tokio::test;
 
 use common::get_client;
 
-/// Test range query
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_range() -> Result<(), Error> {
+#[test]
+async fn test_put() -> Result<(), Error> {
     let client = get_client().await?;
     let mut kv_client = client.get_kv_client();
-    let response = kv_client.range(ByteSequence::from("greeting")).await?;
-
-    let expected = ("greeting".as_bytes(), "Hello, etcd".as_bytes());
-
-    let kvs = response.into_inner().kvs;
-    assert_eq!(kvs.len(), 1);
-    assert_eq!(kvs[0].key, expected.0);
-    assert_eq!(kvs[0].value, expected.1);
-    Ok(())
-}
-
-/// Test range query with prefix
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_range_with_prefix() -> Result<(), Error> {
-    let client = get_client().await?;
-    let mut kv_client = client.get_kv_client();
-    let response = kv_client
-        .range_with_prefix(ByteSequence::from("greet"))
-        .await?;
-    let kvs = response.into_inner().kvs;
-    assert_eq!(kvs.len(), 3);
-
-    let expected = vec![
-        ("greeting".as_bytes(), "Hello, etcd".as_bytes()),
-        ("greetinh".as_bytes(), "Hello, etcd".as_bytes()),
-        ("greetini".as_bytes(), "Hello, etcd".as_bytes()),
-    ];
-
-    for (i, kv) in kvs.iter().enumerate() {
-        assert_eq!(kv.key, expected[i].0);
-        assert_eq!(kv.value, expected[i].1);
-    }
-
-    Ok(())
-}
-
-/// Test range query with string key
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_range_with_str() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let mut kv_client = client.get_kv_client();
-    let response = kv_client.range_with_str("greeting").await?;
-    let kvs = response.into_inner().kvs;
-
-    let expected = ("greeting".as_bytes(), "Hello, etcd".as_bytes());
-
-    assert_eq!(kvs.len(), 1);
-    assert_eq!(kvs[0].key, expected.0);
-    assert_eq!(kvs[0].value, expected.1);
-    Ok(())
-}
-
-/// Test range query with explicit end key
-///
-/// # Test keys
-///
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_range_with_end() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let mut kv_client = client.get_kv_client();
-    let response = kv_client
-        .range_with_end(
-            ByteSequence::from("greeting"),
-            ByteSequence::from("greetini"),
-        )
-        .await?;
-
-    let kvs = response.into_inner().kvs;
-    assert_eq!(kvs.len(), 2);
-
-    let expected = vec![
-        ("greeting".as_bytes(), "Hello, etcd".as_bytes()),
-        ("greetinh".as_bytes(), "Hello, etcd".as_bytes()),
-    ];
-
-    for (i, kv) in kvs.iter().enumerate() {
-        assert_eq!(kv.key, expected[i].0);
-        assert_eq!(kv.value, expected[i].1);
-    }
-
-    Ok(())
-}
-
-/// Test range query for all keys
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_range_all() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let mut kv_client = client.get_kv_client();
-
-    let response = kv_client.range_all().await?;
-
-    let range_response = response.into_inner();
-    let kvs = range_response.kvs;
-
-    let expected = vec![
-        ("foo".as_bytes(), "bar".as_bytes()),
-        ("greeting".as_bytes(), "Hello, etcd".as_bytes()),
-        ("greetinh".as_bytes(), "Hello, etcd".as_bytes()),
-        ("greetini".as_bytes(), "Hello, etcd".as_bytes()),
-    ];
-
-    assert_eq!(kvs.len(), 4);
-
-    for (i, kv) in kvs.iter().enumerate() {
-        assert_eq!(kv.key, expected[i].0);
-        assert_eq!(kv.value, expected[i].1);
-    }
-
-    Ok(())
-}
-
-/// Test range query with options
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_range_with_options() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let mut kv_client = client.get_kv_client();
-
-    let response = kv_client
-        .range_with_options(
-            Some("greeting".into()),
-            Some("greetinh".into()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .await?;
-
-    let kvs = response.into_inner().kvs;
-    assert_eq!(kvs.len(), 1);
-
-    let expected = vec![("greeting".as_bytes(), "Hello, etcd".as_bytes())];
-
-    for (i, kv) in kvs.iter().enumerate() {
-        assert_eq!(kv.key, expected[i].0);
-        assert_eq!(kv.value, expected[i].1);
-    }
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_range_with_request() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let mut kv_client = client.get_kv_client();
-
-    let request = kv_client.build_range_request(
-        Some(ByteSequence::from("greeting")),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-    );
-
-    let response = kv_client.range_with_request(request).await?;
-
-    let kvs = response.into_inner().kvs;
-    assert_eq!(kvs.len(), 1);
-    let expected = ("greeting".as_bytes(), "Hello, etcd".as_bytes());
-    assert_eq!(kvs[0].key, expected.0);
-    assert_eq!(kvs[0].value, expected.1);
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_build_put_request() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("test_key");
     let value = ByteSequence::from("test_value");
 
-    let request = kv_client.build_put_request(key.clone(), value.clone(), None, None, None, None);
+    // Clean up test key if it exists
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
 
-    assert_eq!(request.key, key.as_bytes());
-    assert_eq!(request.value, value.as_bytes());
-    assert_eq!(request.lease, 0);
-    assert_eq!(request.prev_kv, false);
+    let put_response = kv_client.put(key.clone(), value.clone()).await?;
 
-    Ok(())
-}
+    assert!(put_response.get_ref().header.is_some());
 
-/// Test range query with options
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_put_with_request() -> Result<(), Error> {
-    let client = get_client().await?;
-
-    let mut kv_client = client.get_kv_client();
-
-    let key = ByteSequence::from("rcfe");
-    let value = ByteSequence::from("rocks");
-
-    let request = kv_client.build_put_request(key.clone(), value.clone(), None, None, None, None);
-
-    let response = kv_client.put_with_request(request).await?;
-
-    let put_response = response.into_inner();
-
-    // Since the key is new, the previous_kv should be None
-    assert!(put_response.prev_kv.is_none());
-
-    // Clean up by deleting the test key
-    let response = kv_client.range(key.clone()).await?;
-
-    let kvs = response.into_inner().kvs;
+    // Verify that the key was inserted
+    let get_response = kv_client.get(key.clone()).await?;
+    let kvs = get_response.into_inner().kvs;
     assert_eq!(kvs.len(), 1);
-    assert_eq!(kvs[0].key, key.as_bytes());
-    assert_eq!(kvs[0].value, value.as_bytes());
+    assert_eq!(kvs[0].key, key.to_vec());
+    assert_eq!(kvs[0].value, value.to_vec());
+
+    // Clean up
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
     Ok(())
 }
 
-/// Test delete with request
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-/// - "rcfe" -> "rocks"
-#[tokio::test]
-async fn test_delete_with_request() -> Result<(), Error> {
+#[test]
+async fn test_put_with_options() -> Result<(), Error> {
     let client = get_client().await?;
     let mut kv_client = client.get_kv_client();
-    let key = ByteSequence::from("rcfe");
-    let delete_request = kv_client.build_delete_request(key.clone(), None, None);
-    let delete_response = kv_client.delete_with_request(delete_request).await?;
-    let delete_range_response = delete_response.into_inner();
-    assert_eq!(delete_range_response.deleted, 1);
+
+    let key = ByteSequence::from("test_key_options");
+    let original_value = ByteSequence::from("test_value_options");
+
+    // Clean up test key if it exists
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // Try prev_kv option
+    let put_options = PutOptions::builder().prev_kv(true).build();
+
+    let put_response = kv_client
+        .put_with_options(key.clone(), original_value.clone(), put_options)
+        .await?;
+    assert!(put_response.get_ref().header.is_some());
+    assert!(put_response.get_ref().prev_kv.is_none());
+
+    // Test updating the key with prev_kv option
+    let new_value = ByteSequence::from("new_test_value_options");
+    let put_options = PutOptions::builder().prev_kv(true).build();
+    let put_response = kv_client
+        .put_with_options(key.clone(), new_value.clone(), put_options)
+        .await?;
+
+    // Verify that prev_kv is returned and matches the original value
+    assert!(put_response.get_ref().header.is_some());
+    assert!(put_response.get_ref().prev_kv.is_some());
+    assert_eq!(
+        put_response.get_ref().prev_kv.as_ref().unwrap().value,
+        original_value.to_vec()
+    );
+
+    // Test ignore_value option
+    let put_options = PutOptions::builder().ignore_value(true).build();
+    let put_response = kv_client
+        .put_with_options(
+            key.clone(),
+            ByteSequence::from("ignored_value"),
+            put_options,
+        )
+        .await?;
+    assert!(put_response.get_ref().header.is_some());
+    // Verify that the value was not changed
+    let get_response = kv_client.get(key.clone()).await?;
+    let kvs = get_response.into_inner().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].value, new_value.to_vec());
+
+    // Clean up
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // TODO Test ignore_lease option
+
     Ok(())
 }
 
-/// Test delete
-/// # Test keys
-/// - "foo" -> "bar"
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
+#[test]
+async fn test_get() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+
+    let key = ByteSequence::from("test_get_key");
+    let value = ByteSequence::from("test_get_value");
+
+    // Clean up test key if it exists
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // Put a key-value pair
+    let _ = kv_client.put(key.clone(), value.clone()).await?;
+
+    // Get the key
+    let get_response = kv_client.get(key.clone()).await?;
+    let kvs = get_response.into_inner().kvs;
+
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].key, key.to_vec());
+    assert_eq!(kvs[0].value, value.to_vec());
+
+    // Clean up
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    Ok(())
+}
+
+#[test]
+async fn test_get_all() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+
+    let key1 = ByteSequence::from("test_get_all_key1");
+    let value1 = ByteSequence::from("test_get_all_value1");
+    let key2 = ByteSequence::from("test_get_all_key2");
+    let value2 = ByteSequence::from("test_get_all_value2");
+    let prefix_key = ByteSequence::from("test_get_all_");
+
+    // Clean up test keys if they exist
+    let _ = kv_client
+        .delete_with_options(
+            prefix_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    // Put key-value pairs
+    let _ = kv_client.put(key1.clone(), value1.clone()).await?;
+    let _ = kv_client.put(key2.clone(), value2.clone()).await?;
+
+    // Get all keys
+    let get_response = kv_client.get_all().await?;
+    let kvs = get_response.into_inner().kvs;
+
+    // Check that our keys are in the result
+    let keys: Vec<Vec<u8>> = kvs.iter().map(|kv| kv.key.clone()).collect();
+    assert!(keys.contains(&key1.to_vec()));
+    assert!(keys.contains(&key2.to_vec()));
+
+    // Clean up
+    let _ = kv_client
+        .delete_with_options(
+            prefix_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+    Ok(())
+}
+
+#[test]
+async fn test_get_with_options() -> Result<(), Error> {
+    // This test can be expanded to include various GetOptions scenarios
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+    let key = ByteSequence::from("test_get_options_key");
+    let value = ByteSequence::from("test_get_options_value");
+
+    // Clean up test key if it exists
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // Put a key-value pair
+    let _ = kv_client.put(key.clone(), value.clone()).await?;
+
+    // Get the key with default options
+    let get_response = kv_client
+        .get_with_options(key.clone(), GetOptions::default())
+        .await?;
+    let kvs = get_response.into_inner().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].key, key.to_vec());
+    assert_eq!(kvs[0].value, value.to_vec());
+
+    // Clean up
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // Test prefix option
+    let prefix_key1 = ByteSequence::from("test_get_options_prefix_1");
+    let prefix_key2 = ByteSequence::from("test_get_options_prefix_2");
+    let prefix_value1 = ByteSequence::from("value1");
+    let prefix_value2 = ByteSequence::from("value2");
+
+    let prefix_key = ByteSequence::from("test_get_options_prefix_");
+
+    // Clean up prefix keys if they exist
+    let _ = kv_client
+        .delete_with_options(
+            prefix_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    // Put prefix keys
+    let _ = kv_client
+        .put(prefix_key1.clone(), prefix_value1.clone())
+        .await?;
+    let _ = kv_client
+        .put(prefix_key2.clone(), prefix_value2.clone())
+        .await?;
+
+    let get_options = GetOptions::builder().prefix(true).build();
+    let get_response = kv_client
+        .get_with_options(prefix_key.clone(), get_options)
+        .await?;
+    let kvs = get_response.into_inner().kvs;
+    assert_eq!(kvs.len(), 2);
+    let keys: Vec<Vec<u8>> = kvs.iter().map(|kv| kv.key.clone()).collect();
+    assert!(keys.contains(&prefix_key1.to_vec()));
+    assert!(keys.contains(&prefix_key2.to_vec()));
+
+    // Clean up prefix keys
+    let _ = kv_client
+        .delete_with_options(
+            prefix_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    // Clean up
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // Test range_end option
+    let range_key1 = ByteSequence::from("test_get_options_range_1");
+    let range_key2 = ByteSequence::from("test_get_options_range_2");
+    let range_value1 = ByteSequence::from("value1");
+    let range_value2 = ByteSequence::from("value2");
+
+    let range_start_key = ByteSequence::from("test_get_options_range_");
+    let range_end_key = ByteSequence::from("test_get_options_range_2");
+
+    // Clean up range keys if they exist
+    let _ = kv_client
+        .delete_with_options(
+            range_start_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    // Put range keys
+    let _ = kv_client
+        .put(range_key1.clone(), range_value1.clone())
+        .await?;
+    let _ = kv_client
+        .put(range_key2.clone(), range_value2.clone())
+        .await?;
+    let get_options = GetOptions::builder().end_key(range_end_key.clone()).build();
+    let get_response = kv_client
+        .get_with_options(range_start_key.clone(), get_options)
+        .await?;
+    let kvs = get_response.into_inner().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].key, range_key1.to_vec());
+    assert_eq!(kvs[0].value, range_value1.to_vec());
+
+    // Clean up range keys
+    let _ = kv_client
+        .delete_with_options(
+            range_start_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    // Test limit option
+    let limit_key1 = ByteSequence::from("test_get_options_limit_1");
+    let limit_key2 = ByteSequence::from("test_get_options_limit_2");
+    let limit_value1 = ByteSequence::from("value1");
+    let limit_value2 = ByteSequence::from("value2");
+    let limit_key = ByteSequence::from("test_get_options_limit_");
+
+    // Clean up limit keys if they exist
+    let _ = kv_client
+        .delete_with_options(
+            limit_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    // Put limit keys
+    let _ = kv_client
+        .put(limit_key1.clone(), limit_value1.clone())
+        .await?;
+    let _ = kv_client
+        .put(limit_key2.clone(), limit_value2.clone())
+        .await?;
+
+    let get_options = GetOptions::builder().prefix(true).limit(1).build();
+    let get_response = kv_client
+        .get_with_options(limit_key.clone(), get_options)
+        .await?;
+    let kvs = get_response.into_inner().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert!(kvs[0].key == limit_key1.to_vec() || kvs[0].key == limit_key2.to_vec());
+
+    // Clean up limit keys
+    let _ = kv_client
+        .delete_with_options(
+            limit_key.clone(),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
+
+    Ok(())
+}
+
+#[test]
 async fn test_delete() -> Result<(), Error> {
     let client = get_client().await?;
     let mut kv_client = client.get_kv_client();
-    let key = ByteSequence::from("foo");
-    let delete_response = kv_client.delete(key.clone()).await?;
-    let delete_range_response = delete_response.into_inner();
-    assert_eq!(delete_range_response.deleted, 1);
-    Ok(())
-}
 
-/// Test delete with prefix
-/// # Test keys
-/// - "greeting" -> "Hello, etcd"
-/// - "greetinh" -> "Hello, etcd"
-/// - "greetini" -> "Hello, etcd"
-#[tokio::test]
-async fn test_delete_with_prefix() -> Result<(), Error> {
-    let client = get_client().await?;
-    let mut kv_client = client.get_kv_client();
+    let key = ByteSequence::from("test_delete_key");
+    let value = ByteSequence::from("test_delete_value");
+
+    // Clean up test key if it exists
+    let _ = kv_client
+        .delete_with_options(key.clone(), Default::default())
+        .await;
+
+    // Put a key-value pair
+    let _ = kv_client.put(key.clone(), value.clone()).await?;
+
+    // Delete the key
     let delete_response = kv_client
-        .delete_with_prefix(ByteSequence::from("greet"))
+        .delete(key.clone())
         .await?;
-    let delete_range_response = delete_response.into_inner();
-    assert_eq!(delete_range_response.deleted, 3);
+
+    assert!(delete_response.get_ref().header.is_some());
+    assert_eq!(delete_response.get_ref().deleted, 1);
+
+    // Verify that the key was deleted
+    let get_response = kv_client.get(key.clone()).await?;
+    let kvs = get_response.into_inner().kvs;
+    assert_eq!(kvs.len(), 0);
+
     Ok(())
 }
 
-/// Test delete all
-/// # Test keys
-/// - (none)
-#[tokio::test]
-async fn test_delete_all() -> Result<(), Error> {
-    let client = get_client().await?;
-    let mut kv_client = client.get_kv_client();
-    let delete_response = kv_client.delete_all().await?;
-    let delete_range_response = delete_response.into_inner();
-    assert!(delete_range_response.deleted >= 0);
-    Ok(())
-}
-
-/// Test build delete request
-#[tokio::test]
-async fn test_build_delete_request() -> Result<(), Error> {
-    let client = get_client().await?;
-    let kv_client = client.get_kv_client();
-    let key = ByteSequence::from("test_key");
-    let request = kv_client.build_delete_request(key.clone(), None, None);
-    assert_eq!(request.key, key.as_bytes());
-    assert_eq!(request.range_end, vec![]);
-    assert_eq!(request.prev_kv, false);
-    Ok(())
-}
-
-/// Test build compact request
-#[tokio::test]
-async fn test_build_compact_request() -> Result<(), Error> {
-    let client = get_client().await?;
-    let kv_client = client.get_kv_client();
-    let revision: i64 = 42;
-    let request = kv_client.build_compact_request(revision, None);
-    assert_eq!(request.revision, revision);
-    assert_eq!(request.physical, false);
-    Ok(())
-}
-
-/// Test compact with request
-/// ### Tips
-/// - Get the current revision before compaction to ensure the target revision exists.
-/// - Use range any key (can be an empty key) to get the current revision.
-#[tokio::test]
-async fn test_compact_with_request() -> Result<(), Error> {
+#[test]
+async fn test_delete_with_options() -> Result<(), Error> {
     let client = get_client().await?;
     let mut kv_client = client.get_kv_client();
 
-    let response = kv_client.range(ByteSequence::from("rockfe")).await?;
-    let current_revision = response.into_inner().header.unwrap().revision;
-    let compact_request = kv_client.build_compact_request(current_revision, None);
-    let response = kv_client.compact_with_request(compact_request).await?;
-    let _compact_response = response.into_inner();
+    let key1 = ByteSequence::from("test_delete_options_key1");
+    let key2 = ByteSequence::from("test_delete_options_key2");
+    let value1 = ByteSequence::from("test_delete_options_value1");
+    let value2 = ByteSequence::from("test_delete_options_value2");
 
-    Ok(())
-}
+    // Clean up test keys if they exist
+    let _ = kv_client
+        .delete_with_options(
+            ByteSequence::from("test_delete_options_"),
+            DeleteOptions::builder().prefix(true).build(),
+        )
+        .await;
 
-/// Test compact
-/// ### Tips
-/// - Get the current revision before compaction to ensure the target revision exists.
-/// - Use range any key (can be an empty key) to get the current revision.
-#[tokio::test]
-async fn test_compact() -> Result<(), Error> {
-    let client = get_client().await?;
-    let mut kv_client = client.get_kv_client();
+    // Put key-value pairs
+    let _ = kv_client.put(key1.clone(), value1.clone()).await?;
+    let _ = kv_client.put(key2.clone(), value2.clone()).await?;
 
-    // put an key to ensure there is at least one revision
-    let put_response = kv_client
-        .put(ByteSequence::from("rockfe"), ByteSequence::from("rocks"))
+    // Delete with prefix option
+    let delete_options = DeleteOptions::builder().prefix(true).build();
+    let delete_response = kv_client
+        .delete_with_options(
+            ByteSequence::from("test_delete_options_"),
+            delete_options,
+        )
         .await?;
-    let _put_resp = put_response.into_inner();
 
-    let response = kv_client.range(ByteSequence::from("rockfe")).await?;
-    let current_revision = response.into_inner().header.unwrap().revision;
-    let response = kv_client.compact(current_revision).await?;
-    let _compact_response = response.into_inner();
+    assert!(delete_response.get_ref().header.is_some());
+    assert_eq!(delete_response.get_ref().deleted, 2);
 
-    // then delete the key
-    let delete_response = kv_client.delete(ByteSequence::from("rockfe")).await?;
-    let _delete_resp = delete_response.into_inner();
+    // Verify that the keys were deleted
+    let get_response1 = kv_client.get(key1.clone()).await?;
+    let kvs1 = get_response1.into_inner().kvs;
+    assert_eq!(kvs1.len(), 0);
+
+    let get_response2 = kv_client.get(key2.clone()).await?;
+    let kvs2 = get_response2.into_inner().kvs;
+    assert_eq!(kvs2.len(), 0);
 
     Ok(())
 }

@@ -3,6 +3,7 @@ pub mod error;
 pub mod factory;
 pub mod kv;
 pub mod options;
+pub mod txn;
 
 pub mod etcdserverpb {
     tonic::include_proto!("etcdserverpb");
@@ -25,7 +26,7 @@ pub mod v3lockpb {
 }
 
 /// A struct representing a sequence of bytes.
-const EMPTY_BYTE_SEQUENCE_VALUE: &[u8] = b"\0";
+const EMPTY_BYTE_SEQUENCE_VALUE: Vec<u8> = Vec::new();
 const MAX_BYTE: u8 = 0xFF; // Maximum byte value
 const INCREMENT_BYTE: u8 = 0x01; // Increment by 1
 
@@ -55,7 +56,7 @@ impl ByteSequence {
     /// ```
     pub fn empty() -> Self {
         ByteSequence {
-            bytes: EMPTY_BYTE_SEQUENCE_VALUE.to_vec(),
+            bytes: EMPTY_BYTE_SEQUENCE_VALUE,
         }
     }
 
@@ -105,6 +106,10 @@ impl ByteSequence {
         }
         // If all bytes are MAX_BYTE, return the escape byte
         ByteSequence::empty()
+    }
+
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.bytes.clone()
     }
 }
 

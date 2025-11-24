@@ -19,8 +19,15 @@ pub enum Error {
     /// Illegal argument error
     #[error("Illegal argument: {0}")]
     IllegalArgument(String),
-    
+
     /// Bytes sequence parsing error
     #[error("Byte sequence parsing error")]
     ByteSequenceParseError,
+
+    /// InvalidTxnSequence
+    /// Indicates that the transaction sequence is invalid
+    /// # Arguments
+    /// * `String` - Description of the error
+    #[error("Invalid transaction sequence: {0}")]
+    InvalidTxnSequence(String),
 }

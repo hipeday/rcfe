@@ -1,9 +1,5 @@
+use crate::{client::Client, error::Error, options::client::ClientOptions};
 use tonic::async_trait;
-use crate::{
-    error::Error,
-    options::client::ClientOptions,
-    client::Client
-};
 
 /// A factory trait for creating clients with specified options.
 /// This trait is asynchronous and can be implemented for different client types.
@@ -64,4 +60,3 @@ where
     /// Returns an `Error` if the client creation fails.
     async fn create(&self, opts: ClientOptions) -> Result<T, Error>;
 }
-

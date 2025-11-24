@@ -52,7 +52,7 @@ impl ClientOptionsBuilder {
     /// ```
     pub fn endpoints<I, S>(mut self, endpoints: I) -> Self
     where
-        I: IntoIterator<Item=S>,
+        I: IntoIterator<Item = S>,
         S: Into<String>,
     {
         let endpoints: Vec<String> = endpoints.into_iter().map(|s| s.into()).collect();
@@ -77,4 +77,3 @@ impl ClientOptionsBuilder {
         }
     }
 }
-

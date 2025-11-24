@@ -1,476 +1,168 @@
+use crate::{
+    ByteSequence,
+    error::Error,
+    etcdserverpb::{DeleteRangeResponse, PutResponse, RangeResponse},
+    options::{delete::DeleteOptions, get::GetOptions, kv::KVOptions, put::PutOptions},
+};
 use tonic::Response;
-use crate::{error::Error, etcdserverpb::RangeResponse, ByteSequence};
-use crate::etcdserverpb::{DeleteRangeResponse, RangeRequest};
 
 /// KVClient defines the interface for interacting with the key-value store.
 /// It provides methods to perform range queries with various options.
 #[tonic::async_trait]
 pub trait KVClient {
-
-    /// Performs a range query for the specified key.
-    /// # Arguments
-    /// * `key` - The key to query.
-    /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range(&mut self, key: ByteSequence) -> Result<Response<RangeResponse>, Error> {
-        self.range_with_options(
-            Some(key),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ).await
+    async fn delete(&mut self, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
+        self.delete_with_options(key, DeleteOptions::default())
+            .await
     }
 
-    /// Performs a range query for all keys with the specified prefix.
+    /// Deletes a key-value pair from the store with the specified options.
     /// # Arguments
-    /// * `prefix` - The prefix to query.
+    /// * `key` - The key to delete.
+    /// * `options` - The options to customize the delete operation.
     /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_with_prefix(&mut self, prefix: ByteSequence) -> Result<Response<RangeResponse>, Error> {
-        let range_end = prefix.next();
-        self.range_with_options(
-            Some(prefix),
-            Some(range_end),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ).await
-    }
-
-    /// Performs a range query for the specified key as a string.
-    /// # Arguments
-    /// * `key` - The key to query as a string.
-    /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_with_str(&mut self, key: &str) -> Result<Response<RangeResponse>, Error> {
-        self.range(ByteSequence::from(key)).await
-    }
-
-    /// Performs a range query for the specified key and range end.
-    /// # Arguments
-    /// * `key` - The key to query as a string.
-    /// * `range_end` - The end of the range to query.
-    /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_with_end(&mut self, key: ByteSequence, range_end: ByteSequence) -> Result<Response<RangeResponse>, Error> {
-        self.range_with_options(
-            Some(key),
-            Some(range_end),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ).await
-    }
-
-    /// Performs a range query for all keys.
-    /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_all(&mut self) -> Result<Response<RangeResponse>, Error> {
-        self.range_with_options(
-            Some(ByteSequence::empty()),
-            Some(ByteSequence::empty()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ).await
-    }
-
-    /// Performs a range query with various options.
-    /// # Arguments
-    /// * `key` - The key to query (optional).
-    /// * `range_end` - The end of the range to query (optional).
-    /// * `revision` - The revision to query at (optional).
-    /// * `sort_order` - The order to sort the results (optional).
-    /// * `sort_target` - The target to sort the results by (optional).
-    /// * `serializable` - Whether to perform a serializable read (optional).
-    /// * `keys_only` - Whether to return only keys (optional).
-    /// * `count_only` - Whether to return only the count of keys (optional).
-    /// * `min_mod_revision` - Minimum modification revision to filter results (optional).
-    /// * `max_mod_revision` - Maximum modification revision to filter results (optional).
-    /// * `min_create_revision` - Minimum creation revision to filter results (optional).
-    /// * `max_create_revision` - Maximum creation revision to filter results (optional).
-    /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_with_options(
+    /// * `Result<Response<etcdserverpb::DeleteRangeResponse>, error::Error>` - The response containing the delete result or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::ByteSequence;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::DeleteRangeResponse;
+    /// use rcfe_core::options::kv::DeleteOptions;
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, options: DeleteOptions) -> Result<Response<DeleteRangeResponse>, Error> {
+    ///     kv_client.delete_with_options(key, options).await
+    /// }
+    /// ```
+    async fn delete_with_options(
         &mut self,
-        key: Option<ByteSequence>,
-        range_end: Option<ByteSequence>,
-        revision: Option<i64>,
-        sort_order: Option<i32>,
-        sort_target: Option<i32>,
-        serializable: Option<bool>,
-        keys_only: Option<bool>,
-        count_only: Option<bool>,
-        min_mod_revision: Option<i64>,
-        max_mod_revision: Option<i64>,
-        min_create_revision: Option<i64>,
-        max_create_revision: Option<i64>,
-    ) -> Result<Response<RangeResponse>, Error> {
-        let request = self.build_range_request(
-            key,
-            range_end,
-            None,
-            revision,
-            sort_order,
-            sort_target,
-            serializable,
-            keys_only,
-            count_only,
-            min_mod_revision,
-            max_mod_revision,
-            min_create_revision,
-            max_create_revision,
-        );
-        self.range_with_request(request).await
-    }
+        key: ByteSequence,
+        options: DeleteOptions,
+    ) -> Result<Response<DeleteRangeResponse>, Error>;
 
-    /// Performs a range query using a pre-constructed RangeRequest.
-    /// # Arguments
-    /// * `request` - The RangeRequest to use for the query.
-    /// # Returns
-    /// * `Result<Response<RangeResponse>, Error>` - The response containing the range results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the range operation fails.
-    async fn range_with_request(
-        &mut self,
-        request: RangeRequest,
-    ) -> Result<Response<RangeResponse>, Error>;
-
-    /// Performs a put operation for the specified key and value.
+    /// Puts a key-value pair into the store.
     /// # Arguments
     /// * `key` - The key to put.
-    /// * `value` - The value to put.
+    /// * `value` - The value to associate with the key.
     /// # Returns
-    /// * `Result<Response<PutResponse>, Error>` - The response containing the put results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the put operation fails.
+    /// * `Result<Response<etcdserverpb::PutResponse>, error::Error>` - The response containing the put result or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::ByteSequence;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::PutResponse;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, value: ByteSequence) -> Result<Response<PutResponse>, Error> {
+    ///     kv_client.put(key, value).await
+    /// }
+    /// ```
     async fn put(
         &mut self,
         key: ByteSequence,
         value: ByteSequence,
-    ) -> Result<Response<crate::etcdserverpb::PutResponse>, Error> {
-        let request = self.build_put_request(key, value, None, None, None, None);
-        self.put_with_request(request).await
+    ) -> Result<Response<PutResponse>, Error> {
+        self.put_with_options(key, value, PutOptions::default())
+            .await
     }
 
-    /// Performs a put operation using a pre-constructed PutRequest.
-    /// # Arguments
-    /// * `request` - The PutRequest to use for the operation.
-    /// # Returns
-    /// * `Result<Response<PutResponse>, Error>` - The response containing the put results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the put operation fails.
-    async fn put_with_request(
-        &mut self,
-        request: crate::etcdserverpb::PutRequest,
-    ) -> Result<Response<crate::etcdserverpb::PutResponse>, Error>;
-
-    /// Performs a delete operation for the specified key.
-    /// # Arguments
-    /// * `key` - The key to delete.
-    /// # Returns
-    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the delete operation fails.
-    async fn delete(&mut self, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
-        let request = self.build_delete_request(key, None, None);
-        self.delete_with_request(request).await
-    }
-
-    /// Performs a delete operation for all keys with the specified prefix.
-    /// # Arguments
-    /// * `prefix` - The prefix to delete.
-    /// # Returns
-    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete
-    /// results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the delete operation fails.
-    async fn delete_with_prefix(&mut self, prefix: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
-        let range_end = prefix.next();
-        let request = self.build_delete_request(prefix, Some(range_end), None);
-        self.delete_with_request(request).await
-    }
-
-    /// Performs a delete operation for all keys.
-    /// # Returns
-    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the delete operation fails.
-    async fn delete_all(&mut self) -> Result<Response<DeleteRangeResponse>, Error> {
-        let request = self.build_delete_request(ByteSequence::empty(), Some(ByteSequence::empty()), None);
-        self.delete_with_request(request).await
-    }
-
-    /// Performs a delete operation for the specified key.
-    /// # Arguments
-    /// * `key` - The key to delete.
-    /// # Returns
-    /// * `Result<Response<DeleteRangeResponse>, Error>` - The response containing the delete results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the delete operation fails.
-    async fn delete_with_request(
-        &mut self,
-        request: crate::etcdserverpb::DeleteRangeRequest,
-    ) -> Result<Response<DeleteRangeResponse>, Error>;
-
-    /// Performs a compaction operation for the specified revision.
-    /// # Arguments
-    /// * `revision` - The revision to compact.
-    /// # Returns
-    /// * `Result<Response<CompactionResponse>, Error>` - The response containing the compaction results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the compaction operation fails.
-    async fn compact(&mut self, revision: i64) -> Result<Response<crate::etcdserverpb::CompactionResponse>, Error> {
-        let request = self.build_compact_request(revision, None);
-        self.compact_with_request(request).await
-    }
-
-    /// Performs a compaction operation for the specified revision.
-    /// # Arguments
-    /// * `revision` - The revision to compact.
-    /// # Returns
-    /// * `Result<Response<CompactionResponse>, Error>` - The response containing the compaction results or an error if the operation fails.
-    /// # Errors
-    /// * Returns an `Error` if the compaction operation fails.
-    async fn compact_with_request(
-        &mut self,
-        request: crate::etcdserverpb::CompactionRequest,
-    ) -> Result<Response<crate::etcdserverpb::CompactionResponse>, Error>;
-
-    /// Builds a RangeRequest with the specified parameters.
-    /// # Arguments
-    /// * `key` - The key to query (optional).
-    /// * `range_end` - The end of the range to query (optional).
-    /// * `limit` - The maximum number of results to return (optional).
-    /// * `revision` - The revision to query at (optional).
-    /// * `sort_order` - The order to sort the results (optional).
-    /// * `sort_target` - The target to sort the results by (optional).
-    /// * `serializable` - Whether to perform a serializable read (optional).
-    /// * `keys_only` - Whether to return only keys (optional).
-    /// * `count_only` - Whether to return only the count of keys (optional).
-    /// * `min_mod_revision` - Minimum modification revision to filter results (optional).
-    /// * `max_mod_revision` - Maximum modification revision to filter results (optional).
-    /// * `min_create_revision` - Minimum creation revision to filter results (optional).
-    /// * `max_create_revision` - Maximum creation revision to filter results (optional).
-    /// # Returns
-    /// * `RangeRequest` - The constructed RangeRequest.
-    fn build_range_request(
-        &self,
-        key: Option<ByteSequence>,
-        range_end: Option<ByteSequence>,
-        limit: Option<i64>,
-        revision: Option<i64>,
-        sort_order: Option<i32>,
-        sort_target: Option<i32>,
-        serializable: Option<bool>,
-        keys_only: Option<bool>,
-        count_only: Option<bool>,
-        min_mod_revision: Option<i64>,
-        max_mod_revision: Option<i64>,
-        min_create_revision: Option<i64>,
-        max_create_revision: Option<i64>,
-    ) -> RangeRequest {
-        let mut request = RangeRequest {
-            ..Default::default()
-        };
-
-        if let Some(k) = key {
-            request.key = k.as_bytes().to_vec();
-        }
-
-        if let Some(re) = range_end {
-            request.range_end = re.as_bytes().to_vec();
-        }
-
-        if let Some(l) = limit {
-            request.limit = l;
-        }
-
-        if let Some(r) = revision {
-            request.revision = r;
-        }
-
-        if let Some(so) = sort_order {
-            request.sort_order = so;
-        }
-
-        if let Some(st) = sort_target {
-            request.sort_target = st;
-        }
-
-        if let Some(s) = serializable {
-            request.serializable = s;
-        }
-
-        if let Some(ko) = keys_only {
-            request.keys_only = ko;
-        }
-
-        if let Some(co) = count_only {
-            request.count_only = co;
-        }
-
-        if let Some(mmr) = min_mod_revision {
-            request.min_mod_revision = mmr;
-        }
-
-        if let Some(xmr) = max_mod_revision {
-            request.max_mod_revision = xmr;
-        }
-
-        if let Some(mcr) = min_create_revision {
-            request.min_create_revision = mcr;
-        }
-
-        if let Some(xcr) = max_create_revision {
-            request.max_create_revision = xcr;
-        }
-
-        request
-    }
-
-    /// Builds a PutRequest with the specified parameters.
+    /// Puts a key-value pair into the store with the specified options.
     /// # Arguments
     /// * `key` - The key to put.
-    /// * `value` - The value to put.
-    /// * `lease` - The lease ID to associate with the key (optional).
-    /// * `prev_kv` - Whether to return the previous key-value pair (optional).
-    /// * `ignore_value` - Whether to ignore the value in the put operation (optional).
-    /// * `ignore_lease` - Whether to ignore the lease in the put operation (optional).
+    /// * `value` - The value to associate with the key.
+    /// * `options` - The options to customize the put operation.
     /// # Returns
-    /// * `PutRequest` - The constructed PutRequest.
-    /// Returns a PutRequest constructed with the provided parameters.
-    fn build_put_request(
-        &self,
+    /// * `Result<Response<etcdserverpb::PutResponse>, error::Error>` - The response containing the put result or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::ByteSequence;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::PutResponse;
+    /// use rcfe_core::options::kv::PutOptions;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, value: ByteSequence, options: PutOptions) -> Result<Response<PutResponse>, Error> {
+    ///     kv_client.put_with_options(key, value, options).await
+    /// }
+    /// ```
+    async fn put_with_options(
+        &mut self,
         key: ByteSequence,
         value: ByteSequence,
-        lease: Option<i64>,
-        prev_kv: Option<bool>,
-        ignore_value: Option<bool>,
-        ignore_lease: Option<bool>,
-    ) -> crate::etcdserverpb::PutRequest {
-        let mut request = crate::etcdserverpb::PutRequest {
-            key: key.as_bytes().to_vec(),
-            value: value.as_bytes().to_vec(),
-            ..Default::default()
-        };
+        options: PutOptions,
+    ) -> Result<Response<PutResponse>, Error>;
 
-        if let Some(l) = lease {
-            request.lease = l;
-        }
-
-        if let Some(pk) = prev_kv {
-            request.prev_kv = pk;
-        }
-
-        if let Some(iv) = ignore_value {
-            request.ignore_value = iv;
-        }
-
-        if let Some(il) = ignore_lease {
-            request.ignore_lease = il;
-        }
-
-        request
+    /// Performs a range query with the specified key.
+    /// # Arguments
+    /// * `key` - The key to query.
+    /// # Returns
+    /// * `Result<Response<etcdserverpb::RangeResponse>, error::Error>` - The response containing the range results or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::ByteSequence;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::RangeResponse;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence) -> Result<Response<RangeResponse>, Error> {
+    ///     kv_client.get(key).await
+    /// }
+    /// ```
+    async fn get(&mut self, key: ByteSequence) -> Result<Response<RangeResponse>, Error> {
+        self.get_with_options(key, GetOptions::default()).await
     }
 
-    /// Builds a DeleteRangeRequest with the specified parameters.
-    /// # Arguments
-    /// * `key` - The key to delete.
-    /// * `range_end` - The end of the range to delete (optional).
-    /// * `prev_kv` - Whether to return the previous key-value pairs (optional).
+    /// Performs a range query to retrieve all key-value pairs in the store.
     /// # Returns
-    /// * `DeleteRangeRequest` - The constructed DeleteRangeRequest.
-    /// Returns a DeleteRangeRequest constructed with the provided parameters.
-    fn build_delete_request(
-        &self,
+    /// * `Result<Response<etcdserverpb::RangeResponse>, error::Error>` - The response containing all key-value pairs or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::RangeResponse;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV) -> Result<Response<RangeResponse>, Error> {
+    ///     kv_client.get_all().await
+    /// }
+    /// ```
+    async fn get_all(&mut self) -> Result<Response<RangeResponse>, Error> {
+        let options = GetOptions::builder()
+            .end_key(ByteSequence::from("\0"))
+            .build();
+        self.get_with_options(ByteSequence::from("\0"), options)
+            .await
+    }
+
+    /// Performs a range query with the specified key and options.
+    /// # Arguments
+    /// * `key` - The key to query.
+    /// * `options` - The options to customize the range query.
+    /// # Returns
+    /// * `Result<Response<etcdserverpb::RangeResponse>, error::Error>` - The response containing the range results or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::ByteSequence;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::RangeResponse;
+    /// use rcfe_core::options::kv::GetOptions;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, options: GetOptions) -> Result<Response<RangeResponse>, Error> {
+    ///     kv_client.get_with_options(key, options).await
+    /// }
+    /// ```
+    async fn get_with_options(
+        &mut self,
         key: ByteSequence,
-        range_end: Option<ByteSequence>,
-        prev_kv: Option<bool>,
-    ) -> crate::etcdserverpb::DeleteRangeRequest {
-        let mut request = crate::etcdserverpb::DeleteRangeRequest {
-            key: key.as_bytes().to_vec(),
-            ..Default::default()
-        };
-
-        if let Some(re) = range_end {
-            request.range_end = re.as_bytes().to_vec();
-        }
-
-        if let Some(pk) = prev_kv {
-            request.prev_kv = pk;
-        }
-
-        request
-    }
-
-    /// Builds a CompactionRequest with the specified parameters.
-    /// # Arguments
-    /// * `revision` - The revision to compact.
-    /// * `physical` - Whether to perform a physical compaction (optional).
-    /// # Returns
-    /// * `CompactionRequest` - The constructed CompactionRequest.
-    /// Returns a CompactionRequest constructed with the provided parameters.
-    fn build_compact_request(
-        &self,
-        revision: i64,
-        physical: Option<bool>,
-    ) -> crate::etcdserverpb::CompactionRequest {
-        let mut request = crate::etcdserverpb::CompactionRequest {
-            revision,
-            ..Default::default()
-        };
-
-        if let Some(p) = physical {
-            request.physical = p;
-        }
-
-        request
-    }
+        options: GetOptions,
+    ) -> Result<Response<RangeResponse>, Error>;
 
     /// Retrieves the KV options associated with this client.
     /// # Returns
     /// * `&KVOptions` - A reference to the KVOptions.
-    fn get_options(&self) -> &crate::options::kv::KVOptions;
+    fn get_options(&self) -> &KVOptions;
 }

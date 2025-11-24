@@ -9,12 +9,22 @@ The name "RCFE" stands for "Rust Client for ETCD".
 
 ## Features
 
+- [X] Async/Await support using Tokio
 - [ ] Basic KV operations (get, put, delete, transactions)
    - [X] Range Get
    - [X] Put
    - [X] Delete
    - [ ] Transactions
-
+   - [ ] Compact
+- [ ] Lease management
+  - [ ] Grant lease
+  - [ ] Revoke lease
+  - [ ] Keep-alive lease
+- [ ] Watch functionality
+- [ ] Authentication support
+- [ ] TLS support
+- [ ] Comprehensive error handling
+- [ ] Documentation and examples
 ## Usage
 
 Add the following to your `Cargo.toml`:
@@ -45,8 +55,11 @@ async fn main() -> Result<(), Error> {
 
   let client = rcfe::DefaultClientFactory::new().create(client_options).await?;
   
+  // Get the KV client
+  let mut kv_client = client.kv_client();
+  
   // Get a value by key
-  let response = kv_client.range(ByteSequence::from("greeting")).await?;
+  let response = kv_client.get(ByteSequence::from("greeting")).await?;
   
   println!("Received response: {:?}", response);
   
