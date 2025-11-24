@@ -56,7 +56,7 @@ async fn main() -> Result<(), Error> {
   let client = rcfe::DefaultClientFactory::new().create(client_options).await?;
   
   // Get the KV client
-  let mut kv_client = client.kv_client();
+  let mut kv_client = client.get_kv_client();
   
   // Get a value by key
   let response = kv_client.get(ByteSequence::from("greeting")).await?;
