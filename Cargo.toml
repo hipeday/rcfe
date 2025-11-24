@@ -8,7 +8,7 @@ members = [
 
 [workspace.package]
 rust-version = "1.89.0"
-version = "0.1.1"
+version = "0.1.2"
 keywords = ["etcd", "client", "etcdv3", "gRPC"]
 categories = ["network-programming", "asynchronous"]
 edition = "2024"
@@ -21,8 +21,8 @@ repository = "https://github.com/hipeday/rcfe"
 
 [workspace.dependencies]
 # Local workspace dependencies
-rcfe-core = { path = "crates/rcfe-core", version = "0.1.1" }
-rcfe = { path = "rcfe", version = "0.1.1" }
+rcfe-core = { path = "crates/rcfe-core", version = "0.1.2" }
+rcfe = { path = "rcfe", version = "0.1.2" }
 
 # External dependencies
 tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
