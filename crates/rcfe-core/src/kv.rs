@@ -1,7 +1,7 @@
 use crate::{
     ByteSequence,
     error::Error,
-    etcdserverpb::{DeleteRangeResponse, PutResponse, RangeResponse},
+    etcdserverpb::{CompactionResponse, DeleteRangeResponse, PutResponse, RangeResponse},
     options::{delete::DeleteOptions, get::GetOptions, kv::KVOptions, put::PutOptions},
     txn::Txn,
 };
@@ -11,6 +11,54 @@ use tonic::Response;
 /// It provides methods to perform range queries with various options.
 #[tonic::async_trait]
 pub trait KVClient {
+    /// Compacts the key-value store up to the specified revision.
+    /// # Arguments
+    /// * `revision` - The revision up to which to compact the store.
+    /// # Returns
+    /// * `Result<Response<etcdserverpb::CompactionResponse>, error::Error>` - The response containing the compaction result or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::CompactionResponse;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, revision: i64) -> Result<Response<CompactionResponse>, Error> {
+    ///     kv_client.compact(revision).await
+    /// }
+    /// ```
+    async fn compact(&mut self, revision: i64) -> Result<Response<CompactionResponse>, Error> {
+        self.compact_with_options(
+            revision,
+            crate::options::compact::CompactOptions::default(),
+        )
+        .await
+    }
+
+    /// Compacts the key-value store up to the specified revision with the given options.
+    /// # Arguments
+    /// * `revision` - The revision up to which to compact the store.
+    /// * `options` - The options to customize the compaction operation.
+    /// # Returns
+    /// * `Result<Response<etcdserverpb::CompactionResponse>, error::Error>` - The response containing the compaction result or an error.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::kv::KVClient;
+    /// use rcfe_core::error::Error;
+    /// use tonic::Response;
+    /// use rcfe_core::etcdserverpb::CompactionResponse;
+    /// use rcfe_core::options::compact::CompactOptions;
+    ///
+    /// async fn example<KV: KVClient>(kv_client: &mut KV, revision: i64, options: CompactOptions) -> Result<Response<CompactionResponse>, Error> {
+    ///    kv_client.compact_with_options(revision, options).await
+    /// }
+    /// ```
+    async fn compact_with_options(
+        &mut self,
+        revision: i64,
+        options: crate::options::compact::CompactOptions,
+    ) -> Result<Response<CompactionResponse>, Error>;
+
     /// Creates a new transaction associated with this KV client.
     /// # Returns
     /// * `impl Txn` - An implementation of the Txn trait for performing transactions

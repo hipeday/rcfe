@@ -9,12 +9,8 @@ use crate::client::DefaultClient;
 /// A default implementation of the ClientFactory trait for creating DefaultClient instances.
 /// # Examples
 /// ```rust
-/// use rcfe_core::{
-///     ClientFactory,
-///     ClientOptions,
-///     DefaultClientFactory,
-///     Error
-/// };
+/// use crate::rcfe::{DefaultClientFactory, ClientFactory, ClientOptions, Error, Client};
+///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Error> {
 ///     let factory = DefaultClientFactory;

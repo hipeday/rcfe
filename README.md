@@ -14,12 +14,12 @@ The name "RCFE" stands for "Rust Client for ETCD".
 ## Features
 
 - [X] Async/Await support using Tokio
-- [ ] Basic KV operations (get, put, delete, transactions)
+- [X] Basic KV operations (get, put, delete, transactions)
    - [X] Range Get
    - [X] Put
    - [X] Delete
    - [X] Transactions
-   - [ ] Compact
+   - [X] Compact
 - [ ] Lease management
   - [ ] Grant lease
   - [ ] Revoke lease

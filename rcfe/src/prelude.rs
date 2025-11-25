@@ -7,11 +7,12 @@ pub use rcfe_core::{
     kv::KVClient,
     options::{
         client::ClientOptions,
+        compact::{CompactOptions, CompactOptionsBuilder},
         delete::{DeleteOptions, DeleteOptionsBuilder},
         get::{GetOptions, GetOptionsBuilder},
         put::{PutOptions, PutOptionsBuilder},
         txn::{
-            compare::{Compare, CompareResult, CompareTarget},
+            compare::{Compare, CompareResult, CompareTarget, CompareBuilder},
             op::RequestOp,
         },
     },

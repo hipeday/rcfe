@@ -14,4 +14,4 @@ repository.workspace = true
 
 [dependencies]
 rcfe-core.workspace = true
-tonic = "0.14.2"
+tonic.workspace = true

@@ -1,6 +1,6 @@
+use rcfe::{ByteSequence, Client, CompactOptions, Compare, CompareResult, CompareTarget, DeleteOptions, Error, GetOptions, KVClient, PutOptions, RequestOp, Txn};
 mod common;
 
-use rcfe::{ByteSequence, Client, DeleteOptions, Error, GetOptions, KVClient, PutOptions};
 use tokio::test;
 
 use common::get_client;
@@ -351,9 +351,7 @@ async fn test_delete() -> Result<(), Error> {
     let _ = kv_client.put(key.clone(), value.clone()).await?;
 
     // Delete the key
-    let delete_response = kv_client
-        .delete(key.clone())
-        .await?;
+    let delete_response = kv_client.delete(key.clone()).await?;
 
     assert!(delete_response.get_ref().header.is_some());
     assert_eq!(delete_response.get_ref().deleted, 1);
@@ -391,10 +389,7 @@ async fn test_delete_with_options() -> Result<(), Error> {
     // Delete with prefix option
     let delete_options = DeleteOptions::builder().prefix(true).build();
     let delete_response = kv_client
-        .delete_with_options(
-            ByteSequence::from("test_delete_options_"),
-            delete_options,
-        )
+        .delete_with_options(ByteSequence::from("test_delete_options_"), delete_options)
         .await?;
 
     assert!(delete_response.get_ref().header.is_some());
@@ -408,6 +403,207 @@ async fn test_delete_with_options() -> Result<(), Error> {
     let get_response2 = kv_client.get(key2.clone()).await?;
     let kvs2 = get_response2.into_inner().kvs;
     assert_eq!(kvs2.len(), 0);
+
+    Ok(())
+}
+
+#[test]
+async fn test_txn() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+    let key = ByteSequence::from("foo");
+    let value = ByteSequence::from("bar");
+
+    // Clean up before test
+    let _ = kv_client.delete(key.clone()).await;
+
+    // Compare key 'foo' not exists(version == 0), if true put key 'foo' 'bar', else get key 'foo'
+    let compares = vec![Compare::version_eq(key.clone(), 0)];
+    let then_ops = vec![RequestOp::Put {
+        key: key.clone(),
+        value: value.clone(),
+        options: None,
+    }];
+    let otherwise_ops = vec![RequestOp::Get {
+        key: key.clone(),
+        options: None,
+    }];
+
+    // Start and commit the transaction
+    let response = kv_client
+        .txn()
+        .when(compares)?
+        .then(then_ops)?
+        .otherwise(otherwise_ops)?
+        .commit()
+        .await?;
+
+    // Assert the transaction was successful
+    assert!(response.get_ref().succeeded);
+
+    // Verify the value was set
+    let get_response = kv_client.get(key.clone()).await?;
+    let kvs = &get_response.get_ref().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].key, key.clone().to_vec());
+    assert_eq!(kvs[0].value, value.clone().to_vec());
+
+    // Compare key 'foo' not exists(version == 0), if true put key 'foo' 'bar', else get key 'foo'
+    let compares = vec![
+        Compare::builder()
+            .key(key.clone())
+            .version(0)
+            .result(CompareResult::Equal)
+            .build(),
+    ];
+    let then_ops = vec![RequestOp::Put {
+        key: key.clone(),
+        value: value.clone(),
+        options: None,
+    }];
+    let otherwise_ops = vec![RequestOp::Get {
+        key: key.clone(),
+        options: None,
+    }];
+
+    // Start and commit the transaction
+    let response = kv_client
+        .txn()
+        .when(compares)?
+        .then(then_ops)?
+        .otherwise(otherwise_ops)?
+        .commit()
+        .await?;
+
+    // Assert the transaction was successful
+    assert!(!response.get_ref().succeeded);
+
+    // Verify the value was set
+    let get_response = kv_client.get(key.clone()).await?;
+    let kvs = &get_response.get_ref().kvs;
+    assert_eq!(kvs.len(), 1);
+    assert_eq!(kvs[0].key, key.clone().to_vec());
+    assert_eq!(kvs[0].value, value.clone().to_vec());
+
+    Ok(())
+}
+
+#[test]
+async fn test_txn_compare() -> Result<(), Error> {
+    let key = ByteSequence::from("compare_test_key");
+
+    let cmp_version = Compare::version_eq(key.clone(), 5);
+    assert_eq!(cmp_version.target, CompareTarget::Version);
+    assert_eq!(cmp_version.result, CompareResult::Equal);
+    assert_eq!(cmp_version.key, key);
+    assert_eq!(cmp_version.version, Some(5));
+    assert!(cmp_version.create_revision.is_none());
+    assert!(cmp_version.mod_revision.is_none());
+    assert!(cmp_version.value.is_none());
+    assert!(cmp_version.range_end.is_none());
+
+    let cmp_value = Compare::value_eq(key.clone(), "test_value");
+    assert_eq!(cmp_value.target, CompareTarget::Value);
+    assert_eq!(cmp_value.result, CompareResult::Equal);
+    assert_eq!(cmp_value.key, key);
+    assert_eq!(cmp_value.value, Some(ByteSequence::from("test_value")));
+    assert!(cmp_value.version.is_none());
+    assert!(cmp_value.create_revision.is_none());
+    assert!(cmp_value.mod_revision.is_none());
+    assert!(cmp_value.range_end.is_none());
+
+    let cmp_create = Compare::create_eq(key.clone(), 10);
+    assert_eq!(cmp_create.target, CompareTarget::Create);
+    assert_eq!(cmp_create.result, CompareResult::Equal);
+    assert_eq!(cmp_create.key, key);
+    assert_eq!(cmp_create.create_revision, Some(10));
+    assert!(cmp_create.version.is_none());
+    assert!(cmp_create.mod_revision.is_none());
+    assert!(cmp_create.value.is_none());
+    assert!(cmp_create.range_end.is_none());
+
+    Ok(())
+}
+
+#[test]
+async fn test_txn_compare_with_range_end() -> Result<(), Error> {
+    let key = ByteSequence::from("compare_range_key");
+    let range_end = ByteSequence::from("compare_range_end");
+
+    let cmp = Compare::builder()
+        .key(key.clone())
+        .result(CompareResult::Equal)
+        .value("test_value")
+        .range_end(range_end.clone())
+        .build();
+
+    assert_eq!(cmp.target, CompareTarget::Value);
+    assert_eq!(cmp.result, CompareResult::Equal);
+    assert_eq!(cmp.key, key);
+    assert_eq!(cmp.value, Some(ByteSequence::from("test_value")));
+    assert_eq!(cmp.range_end, Some(range_end));
+    assert!(cmp.version.is_none());
+    assert!(cmp.create_revision.is_none());
+    assert!(cmp.mod_revision.is_none());
+
+    Ok(())
+}
+
+#[test]
+async fn text_compact() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+
+    let key = ByteSequence::from("compact_test_key");
+    let value = ByteSequence::from("compact_test_value");
+
+    // Clean up test key if it exists
+    let _ = kv_client.delete(key.clone()).await;
+
+    // Put a key-value pair
+    let _ = kv_client.put(key.clone(), value.clone()).await?;
+
+    // Compact the store at the current revision
+    let get_response = kv_client.get(key.clone()).await?;
+    let revision = get_response.get_ref().header.as_ref().unwrap().revision;
+
+    let compact_response = kv_client.compact(revision).await?;
+
+    assert!(compact_response.get_ref().header.is_some());
+
+    // Clean up
+    let _ = kv_client.delete(key.clone()).await;
+
+    Ok(())
+}
+
+#[test]
+async fn test_compact_with_options() -> Result<(), Error> {
+    let client = get_client().await?;
+    let mut kv_client = client.get_kv_client();
+
+    let key = ByteSequence::from("compact_options_test_key");
+    let value = ByteSequence::from("compact_options_test_value");
+
+    // Clean up test key if it exists
+    let _ = kv_client.delete(key.clone()).await;
+
+    // Put a key-value pair
+    let _ = kv_client.put(key.clone(), value.clone()).await?;
+
+    // Compact the store at the current revision with physical option
+    let get_response = kv_client.get(key.clone()).await?;
+    let revision = get_response.get_ref().header.as_ref().unwrap().revision;
+
+    let compact_options = CompactOptions::builder().physical(true).build();
+    let compact_response = kv_client
+        .compact_with_options(revision, compact_options)
+        .await?;
+
+    assert!(compact_response.get_ref().header.is_some());
+
+    // Clean up
+    let _ = kv_client.delete(key.clone()).await;
 
     Ok(())
 }
