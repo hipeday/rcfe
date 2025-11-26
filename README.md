@@ -26,10 +26,13 @@ The name "RCFE" stands for "Rust Client for ETCD".
   - [X] Keep-alive lease
   - [X] Time-to-live query
 - [ ] Watch functionality
+  - [ ] Progress
+  - [ ] Watch
 - [ ] Authentication support
 - [ ] TLS support
 - [ ] Comprehensive error handling
 - [ ] Documentation and examples
+
 ## Usage
 
 Add the following to your `Cargo.toml`:
