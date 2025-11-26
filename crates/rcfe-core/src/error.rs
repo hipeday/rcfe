@@ -30,4 +30,15 @@ pub enum Error {
     /// * `String` - Description of the error
     #[error("Invalid transaction sequence: {0}")]
     InvalidTxnSequence(String),
+
+    /// Lease KeepAlive error
+    /// Indicates an error occurred during lease keep-alive
+    /// # Arguments
+    /// * `String` - Description of the error
+    #[error("Lease keep-alive error: {0}")]
+    KeepAliveError(String),
+    
+    /// Other error
+    #[error("Other error: {0}")]
+    Other(String),
 }

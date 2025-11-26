@@ -577,6 +577,7 @@ name = "rcfe"
 version = "0.1.2"
 dependencies = [
  "rcfe-core",
+ "tokio",
  "tonic",
 ]
 

@@ -1,4 +1,4 @@
-use crate::{kv::KVClient, options::client::ClientOptions};
+use crate::{kv::KVClient, lease::LeaseClient, options::client::ClientOptions};
 
 /// Client trait defining the interface for a client.
 /// Implementors must provide methods to retrieve client options and a key-value client.
@@ -70,4 +70,31 @@ pub trait Client {
     /// let kv_client = my_client.get_kv_client();
     /// ```
     fn get_kv_client(&self) -> impl KVClient;
+
+    /// Get the lease client.
+    /// # Returns
+    /// An implementation of the `LeaseClient` trait.
+    /// # Examples
+    /// ```rust
+    /// use rcfe_core::Client;
+    /// use rcfe_core::options::client::ClientOptions;
+    /// use rcfe_core::lease::LeaseClient;
+    ///
+    /// struct MyClient;
+    ///
+    /// impl Client for MyClient {
+    ///     fn get_options(&self) -> &ClientOptions {
+    ///         unimplemented!()
+    ///     }
+    ///     fn get_kv_client(&self) -> impl KVClient {
+    ///         unimplemented!()
+    ///     }
+    ///     fn get_lease_client(&self) -> impl LeaseClient {
+    ///         unimplemented!()
+    ///     }
+    /// }
+    /// let my_client = MyClient;
+    /// let lease_client = my_client.get_lease_client();
+    /// ```
+    fn get_lease_client(&self) -> impl LeaseClient;
 }

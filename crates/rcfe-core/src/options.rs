@@ -5,3 +5,4 @@ pub mod kv;
 pub mod put;
 pub mod txn;
 pub mod compact;
+pub mod lease;

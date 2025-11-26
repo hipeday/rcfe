@@ -4,6 +4,7 @@ pub mod factory;
 pub mod kv;
 pub mod options;
 pub mod txn;
+pub mod lease;
 
 pub mod etcdserverpb {
     tonic::include_proto!("etcdserverpb");
