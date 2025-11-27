@@ -1,19 +1,13 @@
-use rcfe_core::{
-    error::Error,
-    etcdserverpb::{
-        LeaseGrantResponse, LeaseKeepAliveRequest, LeaseKeepAliveResponse, LeaseRevokeRequest,
-        LeaseRevokeResponse, lease_client,
-    },
-    lease::{KeepAliveHandler, LeaseClient},
-    options::lease::{LeaseOptions, grant::GrantOptions},
+use crate::{
+    Error, GrantOptions, GrpcLeaseClient, KeepAliveHandler, LeaseClient, LeaseClientOptions,
+    LeaseGrantResponse, LeaseKeepAliveRequest, LeaseKeepAliveResponse, LeaseRevokeRequest,
+    LeaseRevokeResponse, LeaseTimeToLiveResponse, TimeToLiveOptions,
 };
 use std::time::Duration;
 use tonic::{
     Request, Response, Streaming, async_trait, codegen::tokio_stream::wrappers::ReceiverStream,
     transport::Channel,
 };
-use rcfe_core::etcdserverpb::LeaseTimeToLiveResponse;
-use rcfe_core::options::lease::TimeToLiveOptions;
 
 pub struct DefaultKeepAliveHandler {
     lease_id: i64,
@@ -56,13 +50,13 @@ impl KeepAliveHandler for DefaultKeepAliveHandler {
 
 #[derive(Clone)]
 pub struct DefaultLeaseClient {
-    inner: lease_client::LeaseClient<Channel>,
+    inner: GrpcLeaseClient<Channel>,
 }
 
 impl DefaultLeaseClient {
-    pub fn new(options: LeaseOptions) -> Self {
+    pub fn new(options: LeaseClientOptions) -> Self {
         DefaultLeaseClient {
-            inner: lease_client::LeaseClient::new(options.channel().clone()),
+            inner: GrpcLeaseClient::new(options.channel().clone()),
         }
     }
 }
@@ -121,7 +115,11 @@ impl LeaseClient for DefaultLeaseClient {
         ))
     }
 
-    async fn time_to_live_with_options(&mut self, lease_id: i64, options: TimeToLiveOptions) -> Result<Response<LeaseTimeToLiveResponse>, Error> {
+    async fn time_to_live_with_options(
+        &mut self,
+        lease_id: i64,
+        options: TimeToLiveOptions,
+    ) -> Result<Response<LeaseTimeToLiveResponse>, Error> {
         let request = options.to_request(lease_id);
         Ok(self.inner.lease_time_to_live(request).await?)
     }

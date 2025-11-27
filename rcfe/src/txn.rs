@@ -1,9 +1,4 @@
-use rcfe_core::{
-    error::Error,
-    etcdserverpb::{TxnRequest, TxnResponse, kv_client::KvClient},
-    options::txn::{compare::Compare, op::RequestOp},
-    txn::Txn,
-};
+use crate::{Compare, Error, GrpcKVClient, RequestOp, Txn, TxnRequest, TxnResponse};
 use tonic::{Response, async_trait, transport::Channel};
 
 pub struct DefaultTxn {
@@ -18,11 +13,11 @@ pub struct DefaultTxn {
 
     seen_then: bool,
     seen_otherwise: bool,
-    kv_client: KvClient<Channel>,
+    kv_client: GrpcKVClient<Channel>,
 }
 
 impl DefaultTxn {
-    pub fn new(kv_client: KvClient<Channel>) -> Self {
+    pub fn new(kv_client: GrpcKVClient<Channel>) -> Self {
         DefaultTxn {
             kv_client,
             when_compares: Vec::new(),
@@ -94,7 +89,12 @@ impl Txn for DefaultTxn {
         let mut txn_request = TxnRequest::default();
 
         if !self.when_compares.is_empty() {
-            txn_request.compare = self.when_compares.iter().cloned().map(|c| c.into()).collect();
+            txn_request.compare = self
+                .when_compares
+                .iter()
+                .cloned()
+                .map(|c| c.into())
+                .collect();
         }
 
         if !self.then_ops.is_empty() {
@@ -102,7 +102,12 @@ impl Txn for DefaultTxn {
         }
 
         if !self.otherwise_ops.is_empty() {
-            txn_request.failure = self.otherwise_ops.iter().cloned().map(|c| c.into()).collect();
+            txn_request.failure = self
+                .otherwise_ops
+                .iter()
+                .cloned()
+                .map(|c| c.into())
+                .collect();
         }
 
         // Send txn_request to etcd server and get response

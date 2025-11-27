@@ -89,37 +89,17 @@ async fn test_keep_alive() -> Result<(), Error> {
     let keep_alive_lease_id = keep_alive_handler.lease_id();
     assert_ne!(keep_alive_lease_id, 0, "Lease ID should be non-zero");
 
+    // 使用线程发送保活请求
     for _ in 0..3 {
         keep_alive_handler.keep_alive().await?;
-        tokio::time::sleep(std::time::Duration::new(1, 0)).await;
     }
 
-    let streaming = keep_alive_handler.into_response().into_inner();
+    let mut streaming = keep_alive_handler.into_response().into_inner();
 
     // 监听保活提示日志
-    tokio::spawn(async move {
-        let mut stream = streaming;
-        loop {
-            match stream.message().await {
-                Ok(Some(response)) => {
-                    println!(
-                        "Received keep-alive response: lease ID = {}, TTL = {}",
-                        response.id, response.ttl
-                    );
-                }
-                Ok(None) => {
-                    println!("Keep-alive stream closed by server");
-                    break;
-                }
-                Err(e) => {
-                    eprintln!("Error receiving keep-alive response: {}", e);
-                    break;
-                }
-            }
-        }
-    })
-    .await
-    .unwrap();
+    while let Some(keep_alive) = streaming.message().await? {
+        assert_eq!(keep_alive.id, lease_id, "Lease ID should match");
+    }
 
     assert_eq!(keep_alive_lease_id, lease_id, "Lease ID should match");
 

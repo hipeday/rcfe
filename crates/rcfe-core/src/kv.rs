@@ -12,47 +12,12 @@ use tonic::Response;
 #[tonic::async_trait]
 pub trait KVClient {
     /// Compacts the key-value store up to the specified revision.
-    /// # Arguments
-    /// * `revision` - The revision up to which to compact the store.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::CompactionResponse>, error::Error>` - The response containing the compaction result or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::CompactionResponse;
-    ///
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, revision: i64) -> Result<Response<CompactionResponse>, Error> {
-    ///     kv_client.compact(revision).await
-    /// }
-    /// ```
     async fn compact(&mut self, revision: i64) -> Result<Response<CompactionResponse>, Error> {
-        self.compact_with_options(
-            revision,
-            crate::options::compact::CompactOptions::default(),
-        )
-        .await
+        self.compact_with_options(revision, crate::options::compact::CompactOptions::default())
+            .await
     }
 
     /// Compacts the key-value store up to the specified revision with the given options.
-    /// # Arguments
-    /// * `revision` - The revision up to which to compact the store.
-    /// * `options` - The options to customize the compaction operation.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::CompactionResponse>, error::Error>` - The response containing the compaction result or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::CompactionResponse;
-    /// use rcfe_core::options::compact::CompactOptions;
-    ///
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, revision: i64, options: CompactOptions) -> Result<Response<CompactionResponse>, Error> {
-    ///    kv_client.compact_with_options(revision, options).await
-    /// }
-    /// ```
     async fn compact_with_options(
         &mut self,
         revision: i64,
@@ -60,58 +25,15 @@ pub trait KVClient {
     ) -> Result<Response<CompactionResponse>, Error>;
 
     /// Creates a new transaction associated with this KV client.
-    /// # Returns
-    /// * `impl Txn` - An implementation of the Txn trait for performing transactions
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::txn::Txn;
-    ///
-    /// fn example<KV: KVClient>(kv_client: &mut KV) -> impl Txn {
-    ///     kv_client.txn()
-    /// }
     fn txn(&mut self) -> impl Txn;
 
     /// Deletes a key-value pair from the store.
-    /// # Arguments
-    /// * `key` - The key to delete.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::DeleteRangeResponse>, error::Error>` - The response containing the delete result or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::ByteSequence;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::DeleteRangeResponse;
-    ///
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
-    ///     kv_client.delete(key).await
-    /// }
-    /// ```
     async fn delete(&mut self, key: ByteSequence) -> Result<Response<DeleteRangeResponse>, Error> {
         self.delete_with_options(key, DeleteOptions::default())
             .await
     }
 
     /// Deletes a key-value pair from the store with the specified options.
-    /// # Arguments
-    /// * `key` - The key to delete.
-    /// * `options` - The options to customize the delete operation.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::DeleteRangeResponse>, error::Error>` - The response containing the delete result or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::ByteSequence;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::DeleteRangeResponse;
-    /// use rcfe_core::options::kv::DeleteOptions;
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, options: DeleteOptions) -> Result<Response<DeleteRangeResponse>, Error> {
-    ///     kv_client.delete_with_options(key, options).await
-    /// }
-    /// ```
     async fn delete_with_options(
         &mut self,
         key: ByteSequence,
@@ -119,58 +41,25 @@ pub trait KVClient {
     ) -> Result<Response<DeleteRangeResponse>, Error>;
 
     /// Puts a key-value pair into the store.
-    /// # Arguments
-    /// * `key` - The key to put.
-    /// * `value` - The value to associate with the key.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::PutResponse>, error::Error>` - The response containing the put result or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::ByteSequence;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::PutResponse;
-    ///
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, value: ByteSequence) -> Result<Response<PutResponse>, Error> {
-    ///     kv_client.put(key, value).await
-    /// }
-    /// ```
-    async fn put(
-        &mut self,
-        key: ByteSequence,
-        value: ByteSequence,
-    ) -> Result<Response<PutResponse>, Error> {
-        self.put_with_options(key, value, PutOptions::default())
+    async fn put<K, V>(&mut self, key: K, value: V) -> Result<Response<PutResponse>, Error>
+    where
+        K: Into<ByteSequence> + Send,
+        V: Into<ByteSequence> + Send,
+    {
+        self.put_with_options(key.into(), value.into(), PutOptions::default())
             .await
     }
 
     /// Puts a key-value pair into the store with the specified options.
-    /// # Arguments
-    /// * `key` - The key to put.
-    /// * `value` - The value to associate with the key.
-    /// * `options` - The options to customize the put operation.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::PutResponse>, error::Error>` - The response containing the put result or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::ByteSequence;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::PutResponse;
-    /// use rcfe_core::options::kv::PutOptions;
-    ///
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, value: ByteSequence, options: PutOptions) -> Result<Response<PutResponse>, Error> {
-    ///     kv_client.put_with_options(key, value, options).await
-    /// }
-    /// ```
-    async fn put_with_options(
+    async fn put_with_options<K, V>(
         &mut self,
-        key: ByteSequence,
-        value: ByteSequence,
+        key: K,
+        value: V,
         options: PutOptions,
-    ) -> Result<Response<PutResponse>, Error>;
+    ) -> Result<Response<PutResponse>, Error>
+    where
+        K: Into<ByteSequence> + Send,
+        V: Into<ByteSequence> + Send;
 
     /// Performs a range query with the specified key.
     /// # Arguments

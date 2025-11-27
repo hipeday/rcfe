@@ -25,9 +25,10 @@ The name "RCFE" stands for "Rust Client for ETCD".
   - [X] Revoke lease
   - [X] Keep-alive lease
   - [X] Time-to-live query
-- [ ] Watch functionality
-  - [ ] Progress
-  - [ ] Watch
+- [X] Watch functionality
+  - [X] Progress
+  - [X] Cancel watch
+  - [X] Watch
 - [ ] Authentication support
 - [ ] TLS support
 - [ ] Comprehensive error handling

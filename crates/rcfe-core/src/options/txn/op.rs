@@ -38,7 +38,7 @@ impl RequestOp {
                         value: value.clone().into(),
                         ..Default::default()
                     },
-                    |opts| opts.to_request(&key, &value),
+                    |opts| opts.to_request(key.clone(), value.clone()),
                 ))),
             },
             RequestOp::Get { key, options } => PbRequestOp {

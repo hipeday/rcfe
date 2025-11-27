@@ -1,10 +1,14 @@
-pub mod client;
-pub mod error;
-pub mod factory;
-pub mod kv;
-pub mod options;
-pub mod txn;
-pub mod lease;
+pub(crate) mod client;
+pub(crate) mod error;
+pub(crate) mod factory;
+pub(crate) mod kv;
+pub(crate) mod options;
+pub(crate) mod txn;
+pub(crate) mod lease;
+pub(crate) mod watch;
+pub(crate) mod prelude;
+
+pub use prelude::*;
 
 pub mod etcdserverpb {
     tonic::include_proto!("etcdserverpb");

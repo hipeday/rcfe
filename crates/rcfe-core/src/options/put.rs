@@ -21,12 +21,16 @@ pub struct PutOptions {
 }
 
 impl PutOptions {
-    pub fn to_request(&self, key: &ByteSequence, value: &ByteSequence) -> PutRequest {
+    pub fn to_request<K, V>(&self, key: K, value: V) -> PutRequest
+    where
+        K: Into<ByteSequence>,
+        V: Into<ByteSequence>,
+    {
         PutRequest {
-            key: key.to_vec(),
+            key: key.into().to_vec(),
             value: match self.ignore_value {
                 true => ByteSequence::empty().to_vec(),
-                false => value.to_vec(),
+                false => value.into().to_vec(),
             },
             lease: self.lease,
             prev_kv: self.prev_kv,

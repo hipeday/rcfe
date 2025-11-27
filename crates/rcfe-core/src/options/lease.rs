@@ -6,13 +6,13 @@ use crate::{
 
 pub mod grant;
 
-pub struct LeaseOptions {
+pub struct LeaseClientOptions {
     channel: Channel,
 }
 
-impl LeaseOptions {
-    pub fn builder() -> LeaseOptionsBuilder {
-        LeaseOptionsBuilder::default()
+impl LeaseClientOptions {
+    pub fn builder() -> LeaseClientOptionsBuilder {
+        LeaseClientOptionsBuilder::default()
     }
 
     pub fn channel(&self) -> &Channel {
@@ -21,19 +21,19 @@ impl LeaseOptions {
 }
 
 #[derive(Default)]
-pub struct LeaseOptionsBuilder {
+pub struct LeaseClientOptionsBuilder {
     channel: Option<Channel>,
 }
 
-impl LeaseOptionsBuilder {
+impl LeaseClientOptionsBuilder {
     pub fn channel(mut self, channel: Channel) -> Self {
         self.channel = Some(channel);
         self
     }
 
-    pub fn build(self) -> Result<LeaseOptions, Error> {
+    pub fn build(self) -> Result<LeaseClientOptions, Error> {
         let channel = self.channel.ok_or(Error::IllegalArgument(String::from("channel not specified")))?;
-        Ok(LeaseOptions { channel })
+        Ok(LeaseClientOptions { channel })
     }
 }
 

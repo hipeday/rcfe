@@ -1,10 +1,7 @@
-use crate::{kv::DefaultKVClient, lease::DefaultLeaseClient};
-use rcfe_core::{
-    client::Client,
-    error::Error,
-    kv::KVClient,
-    lease::LeaseClient,
-    options::{client::ClientOptions, kv::KVOptions, lease::LeaseOptions},
+use crate::{
+    Client, ClientOptions, Error, KVClient, KVOptions, LeaseClient, LeaseClientOptions,
+    WatchClient, WatchClientOptions, kv::DefaultKVClient, lease::DefaultLeaseClient,
+    watch::DefaultWatchClient,
 };
 use tonic::transport::Channel;
 
@@ -13,6 +10,7 @@ pub struct DefaultClient {
     options: ClientOptions,
     kv_client: DefaultKVClient,
     lease_client: DefaultLeaseClient,
+    watch_client: DefaultWatchClient,
 }
 
 impl DefaultClient {
@@ -31,7 +29,12 @@ impl DefaultClient {
             options: opts,
             kv_client: DefaultKVClient::new(KVOptions::builder().channel(channel.clone()).build()?),
             lease_client: DefaultLeaseClient::new(
-                LeaseOptions::builder().channel(channel.clone()).build()?,
+                LeaseClientOptions::builder()
+                    .channel(channel.clone())
+                    .build()?,
+            ),
+            watch_client: DefaultWatchClient::new(
+                WatchClientOptions::builder().channel(channel).build()?,
             ),
         })
     }
@@ -48,5 +51,9 @@ impl Client for DefaultClient {
 
     fn get_lease_client(&self) -> impl LeaseClient {
         self.lease_client.clone()
+    }
+
+    fn get_watch_client(&self) -> impl WatchClient {
+        self.watch_client.clone()
     }
 }

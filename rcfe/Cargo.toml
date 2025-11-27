@@ -16,3 +16,10 @@ repository.workspace = true
 rcfe-core.workspace = true
 tonic.workspace = true
 tokio.workspace = true
+
+[dev-dependencies]
+dotenvy.workspace = true
+
+[[example]]
+name = "watch"
+path = "examples/watch.rs"

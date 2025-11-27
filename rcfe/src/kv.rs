@@ -1,37 +1,21 @@
-use crate::DefaultTxn;
-use rcfe_core::{
-    etcdserverpb::{
-        CompactionResponse,
-        DeleteRangeResponse,
-        PutResponse,
-        RangeResponse,
-        kv_client::KvClient
-    },
-    options::{
-        compact::CompactOptions,
-        delete::DeleteOptions,
-        get::GetOptions,
-        kv::KVOptions,
-        put::PutOptions
-    },
-    ByteSequence,
-    error::Error,
-    kv::KVClient,
-    txn::Txn
+use crate::{
+    ByteSequence, CompactOptions, CompactionResponse, DefaultTxn, DeleteOptions,
+    DeleteRangeResponse, Error, GetOptions, GrpcKVClient, KVClient, KVOptions, PutOptions,
+    PutResponse, RangeResponse, Txn,
 };
 use tonic::{Response, transport::Channel};
 
 #[derive(Clone)]
 pub struct DefaultKVClient {
     options: KVOptions,
-    inner: KvClient<Channel>,
+    inner: GrpcKVClient<Channel>,
 }
 
 impl DefaultKVClient {
     pub fn new(opts: KVOptions) -> Self {
         DefaultKVClient {
             options: opts.clone(),
-            inner: KvClient::new(opts.channel()),
+            inner: GrpcKVClient::new(opts.channel()),
         }
     }
 }
@@ -60,13 +44,17 @@ impl KVClient for DefaultKVClient {
         Ok(self.inner.delete_range(request).await?)
     }
 
-    async fn put_with_options(
+    async fn put_with_options<K, V>(
         &mut self,
-        key: ByteSequence,
-        value: ByteSequence,
+        key: K,
+        value: V,
         options: PutOptions,
-    ) -> Result<Response<PutResponse>, Error> {
-        let request = options.to_request(&key, &value);
+    ) -> Result<Response<PutResponse>, Error>
+    where
+        K: Into<ByteSequence> + Send,
+        V: Into<ByteSequence> + Send,
+    {
+        let request = options.to_request(key, value);
         Ok(self.inner.put(request).await?)
     }
 

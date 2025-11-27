@@ -37,6 +37,13 @@ pub enum Error {
     /// * `String` - Description of the error
     #[error("Lease keep-alive error: {0}")]
     KeepAliveError(String),
+
+    /// Watch error
+    /// Indicates an error occurred during watch operation
+    /// # Arguments
+    /// * `String` - Description of the error
+    #[error("Watch error: {0}")]
+    WatchError(String),
     
     /// Other error
     #[error("Other error: {0}")]
