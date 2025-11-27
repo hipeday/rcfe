@@ -30,7 +30,10 @@ The name "RCFE" stands for "Rust Client for ETCD".
   - [X] Cancel watch
   - [X] Watch
 - [ ] Authentication support
-- [ ] TLS support
+- [ ] Cluster management
+- [ ] Maintenance operations
+- [ ] Election support
+- [ ] Lock support
 - [ ] Comprehensive error handling
 - [ ] Documentation and examples
 

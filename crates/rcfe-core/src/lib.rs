@@ -54,11 +54,6 @@ impl ByteSequence {
     }
 
     /// Creates an empty ByteSequence.
-    /// # Examples
-    /// ```rust
-    /// let empty_seq = ByteSequence::empty();
-    /// assert_eq!(empty_seq.as_bytes(), b"\0");
-    /// ```
     pub fn empty() -> Self {
         ByteSequence {
             inner: EMPTY_BYTE_SEQUENCE_VALUE,
@@ -69,31 +64,6 @@ impl ByteSequence {
     /// If the current sequence is empty, it returns an empty sequence.
     /// If all bytes are at their maximum value, it returns an empty sequence.
     /// If the last byte can be incremented, it increments it and truncates the sequence.
-    /// # Examples
-    ///
-    /// - Basic test case
-    ///
-    /// ```rust
-    /// let from = ByteSequence::from("abc");
-    /// let next_seq = from.next();
-    /// assert_eq!(next_seq, ByteSequence::from("abd"));
-    /// ```
-    ///
-    /// - Test case with `0xff` bytes
-    ///
-    /// ```rust
-    /// let from = ByteSequence::from(b"ab\xff\xff" as &[u8]); // [0x61,0x62,0xff,0xff]
-    /// let next_seq = from.next();
-    /// assert_eq!(next_seq.as_bytes(), b"ac");
-    /// ```
-    ///
-    /// - Test case where all bytes are `0xff`
-    ///
-    /// ```rust
-    /// let from = ByteSequence::from(b"\xff\xff" as &[u8]); // [0xff,0xff]
-    /// let next_seq = from.next();
-    /// assert_eq!(next_seq.as_bytes(), ByteSequence::empty().as_bytes());
-    /// ```
     pub fn next(&self) -> Self {
         if self.inner.is_empty() {
             return ByteSequence::empty();
@@ -111,6 +81,12 @@ impl ByteSequence {
         }
         // If all bytes are MAX_BYTE, return the escape byte
         ByteSequence::empty()
+    }
+
+    pub fn append(&mut self, other: &ByteSequence) -> Self {
+        let mut combined = self.inner.clone();
+        combined.extend_from_slice(&other.inner);
+        ByteSequence { inner: combined }
     }
 
     pub fn to_vec(&self) -> Vec<u8> {

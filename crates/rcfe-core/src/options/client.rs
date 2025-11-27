@@ -1,15 +1,29 @@
+use crate::{
+    ByteSequence,
+    options::Namespaceable
+};
+use crate::options::NamespaceBuilder;
+
 /// Client options for configuring the RCFE client.
 /// # Fields
 /// * `endpoints` - A vector of endpoint strings for connecting to the RCFE server.
 #[derive(Debug, Clone)]
 pub struct ClientOptions {
     endpoints: Vec<String>,
+    namespace: Option<ByteSequence>,
 }
 
 /// Builder for ClientOptions.
 #[derive(Default, Debug)]
 pub struct ClientOptionsBuilder {
     endpoints: Vec<String>,
+    namespace: Option<ByteSequence>,
+}
+
+impl Namespaceable for ClientOptions {
+    fn namespace(&self) -> Option<ByteSequence> {
+        self.namespace.clone()
+    }
 }
 
 impl ClientOptions {
@@ -36,6 +50,18 @@ impl ClientOptions {
     /// ```
     pub fn builder() -> ClientOptionsBuilder {
         ClientOptionsBuilder::default()
+    }
+}
+
+impl NamespaceBuilder for ClientOptionsBuilder {
+    fn namespace<N>(mut self, namespace: Option<N>) -> Self
+    where
+        N: Into<ByteSequence>
+    {
+        if let Some(namespace) = namespace {
+            self.namespace = Some(namespace.into());
+        }
+        self
     }
 }
 
@@ -74,6 +100,7 @@ impl ClientOptionsBuilder {
     pub fn build(self) -> ClientOptions {
         ClientOptions {
             endpoints: self.endpoints,
+            namespace: self.namespace,
         }
     }
 }

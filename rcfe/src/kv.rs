@@ -67,7 +67,7 @@ impl KVClient for DefaultKVClient {
         Ok(self.inner.range(request).await?)
     }
 
-    fn get_options(&self) -> &KVOptions {
+    fn options(&self) -> &KVOptions {
         &self.options
     }
 }

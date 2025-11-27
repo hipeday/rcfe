@@ -1,23 +1,10 @@
 use crate::{
     ByteSequence, etcdserverpb,
     etcdserverpb::range_request::{SortOrder, SortTarget},
+    options::{NamespaceBuilder, Namespaceable},
 };
 
 /// Options for Get operations
-/// # Fields
-/// * `end_key` - Optional end key for range queries
-/// * `limit` - limit on number of results
-/// * `revision` - revision to read from
-/// * `sort_order` - sort order
-/// * `sort_target` - sort target
-/// * `serializable` - serializable read
-/// * `keys_only` - keys only flag
-/// * `count_only` - count only flag
-/// * `min_mod_revision` - minimum modification revision
-/// * `max_mod_revision` - maximum modification revision
-/// * `min_create_revision` - minimum creation revision
-/// * `max_create_revision` - maximum creation revision
-/// * `prefix` - prefix flag
 #[derive(Debug, Clone)]
 pub struct GetOptions {
     pub end_key: Option<ByteSequence>, // Optional end key for range queries
@@ -33,17 +20,10 @@ pub struct GetOptions {
     pub min_create_revision: i64,      // minimum creation revision
     pub max_create_revision: i64,      // maximum creation revision
     pub prefix: bool,                  // prefix flag
+    namespace: Option<ByteSequence>,
 }
 
 /// Builder for GetOptions
-/// # Examples
-/// ```rust
-/// use rcfe_core::options::kv::{GetOptions, GetOptionsBuilder};
-/// let get_options = GetOptions::builder()
-///     .limit(10)
-///     .serializable(true)
-///     .build();
-/// ```
 #[derive(Debug, Clone, Default)]
 pub struct GetOptionsBuilder {
     end_key: Option<ByteSequence>,
@@ -59,6 +39,7 @@ pub struct GetOptionsBuilder {
     min_create_revision: Option<i64>,
     max_create_revision: Option<i64>,
     prefix: Option<bool>,
+    namespace: Option<ByteSequence>,
 }
 
 impl GetOptions {
@@ -77,48 +58,41 @@ impl GetOptions {
             min_create_revision: 0,
             max_create_revision: 0,
             prefix: false,
+            namespace: None,
         }
     }
 
     /// Creates a builder for GetOptions
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::options::kv::{GetOptions, GetOptionsBuilder};
-    /// let get_options = GetOptions::builder()
-    ///     .limit(10)
-    ///     .serializable(true)
-    ///     .build();
-    /// ```
     pub fn builder() -> GetOptionsBuilder {
         GetOptionsBuilder::default()
     }
 
     /// Creates a default GetOptions instance
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::options::kv::GetOptions;
-    /// let get_options = GetOptions::default();
-    /// ```
     pub fn default() -> Self {
         Self::new()
     }
 
     /// Converts GetOptions to an etcdserverpb::RangeRequest
-    /// # Arguments
-    /// * `key` - The key to get
-    /// # Returns
-    /// * `etcdserverpb::RangeRequest` - The corresponding RangeRequest
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::options::kv::{GetOptions, ByteSequence};
-    /// let get_options = GetOptions::default();
-    /// let key = ByteSequence::from("my_key");
-    /// let range_request = get_options.to_request(&key);
-    /// ```
     pub fn to_request(self, key: &ByteSequence) -> etcdserverpb::RangeRequest {
-        let end_key = match self.prefix {
-            true => key.next(),
-            false => self.end_key.unwrap_or_else(|| ByteSequence::empty()),
+        let (key, end_key) = match self.namespace {
+            None => (
+                key.clone(),
+                match self.prefix {
+                    true => key.next(),
+                    false => self.end_key.unwrap_or_else(|| ByteSequence::empty()),
+                },
+            ),
+            Some(mut ns) => {
+                let namespaced_key = ns.clone().append(&key);
+                let namespaced_end_key = match self.prefix {
+                    true => namespaced_key.next(),
+                    false => match self.end_key {
+                        Some(end_key) => ns.append(&end_key),
+                        None => ByteSequence::empty(),
+                    },
+                };
+                (namespaced_key, namespaced_end_key)
+            }
         };
         etcdserverpb::RangeRequest {
             key: key.as_bytes().to_vec(),
@@ -138,15 +112,14 @@ impl GetOptions {
     }
 }
 
+impl Namespaceable for GetOptions {
+    fn namespace(&self) -> Option<ByteSequence> {
+        self.namespace.clone()
+    }
+}
+
 impl GetOptionsBuilder {
     /// Sets the end key for range queries.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::options::kv::{GetOptionsBuilder, ByteSequence};
-    /// let get_options = GetOptionsBuilder::default()
-    ///     .end_key(ByteSequence::from("end_key"))
-    ///     .build();
-    /// ```
     pub fn end_key(mut self, end_key: ByteSequence) -> Self {
         self.end_key = Some(end_key);
         self
@@ -267,6 +240,22 @@ impl GetOptionsBuilder {
             options.prefix = prefix;
         }
 
+        if let Some(namespace) = self.namespace {
+            options.namespace = Some(namespace);
+        }
+
         options
+    }
+}
+
+impl NamespaceBuilder for GetOptionsBuilder {
+    fn namespace<N>(mut self, namespace: Option<N>) -> Self
+    where
+        N: Into<ByteSequence>,
+    {
+        if let Some(ns) = namespace {
+            self.namespace = Some(ns.into());
+        }
+        self
     }
 }

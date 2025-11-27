@@ -13,6 +13,7 @@ pub use crate::{
     kv::KVClient,
     lease::{KeepAliveHandler, LeaseClient},
     options::{
+        NamespaceBuilder, Namespaceable,
         client::ClientOptions,
         compact::{CompactOptions, CompactOptionsBuilder},
         delete::{DeleteOptions, DeleteOptionsBuilder},
@@ -29,9 +30,8 @@ pub use crate::{
             op::RequestOp,
         },
         watch::{
-            FilterType, WatchCreateOptions, WatchCreateOptionsBuilder,
-            WatchClientOptions as WatchClientOptions, WatchClientOptionsBuilder as WatchClientOptionsBuilder,
-            WatchRequestType,
+            FilterType, WatchClientOptions, WatchClientOptionsBuilder, WatchCreateOptions,
+            WatchCreateOptionsBuilder, WatchRequestType,
         },
     },
     txn::Txn,
