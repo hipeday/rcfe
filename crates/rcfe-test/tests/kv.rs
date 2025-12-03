@@ -7,7 +7,7 @@ use common::get_client;
 
 #[test]
 async fn test_put() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("test_key");
@@ -39,7 +39,7 @@ async fn test_put() -> Result<(), Error> {
 
 #[test]
 async fn test_put_with_options() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("test_key_options");
@@ -102,7 +102,7 @@ async fn test_put_with_options() -> Result<(), Error> {
 
 #[test]
 async fn test_get() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("test_get_key");
@@ -134,7 +134,7 @@ async fn test_get() -> Result<(), Error> {
 
 #[test]
 async fn test_get_all() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key1 = ByteSequence::from("test_get_all_key1");
@@ -156,7 +156,7 @@ async fn test_get_all() -> Result<(), Error> {
     let _ = kv_client.put(key2.clone(), value2.clone()).await?;
 
     // Get all keys
-    let get_response = kv_client.get_all().await?;
+    let get_response = kv_client.get_all(None).await?;
     let kvs = get_response.into_inner().kvs;
 
     // Check that our keys are in the result
@@ -177,7 +177,7 @@ async fn test_get_all() -> Result<(), Error> {
 #[test]
 async fn test_get_with_options() -> Result<(), Error> {
     // This test can be expanded to include various GetOptions scenarios
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
     let key = ByteSequence::from("test_get_options_key");
     let value = ByteSequence::from("test_get_options_value");
@@ -336,7 +336,7 @@ async fn test_get_with_options() -> Result<(), Error> {
 
 #[test]
 async fn test_delete() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("test_delete_key");
@@ -366,7 +366,7 @@ async fn test_delete() -> Result<(), Error> {
 
 #[test]
 async fn test_delete_with_options() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key1 = ByteSequence::from("test_delete_options_key1");
@@ -409,7 +409,7 @@ async fn test_delete_with_options() -> Result<(), Error> {
 
 #[test]
 async fn test_txn() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
     let key = ByteSequence::from("foo");
     let value = ByteSequence::from("bar");
@@ -551,7 +551,7 @@ async fn test_txn_compare_with_range_end() -> Result<(), Error> {
 
 #[test]
 async fn text_compact() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("compact_test_key");
@@ -579,7 +579,7 @@ async fn text_compact() -> Result<(), Error> {
 
 #[test]
 async fn test_compact_with_options() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut kv_client = client.get_kv_client();
 
     let key = ByteSequence::from("compact_options_test_key");

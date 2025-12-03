@@ -10,7 +10,7 @@ use tonic::Response;
 /// KVClient defines the interface for interacting with the key-value store.
 /// It provides methods to perform range queries with various options.
 #[tonic::async_trait]
-pub trait KVClient {
+pub trait KVClient: Send + Sync {
     /// Compacts the key-value store up to the specified revision.
     async fn compact(&mut self, revision: i64) -> Result<Response<CompactionResponse>, Error> {
         self.compact_with_options(revision, crate::CompactOptions::default())
@@ -62,9 +62,12 @@ pub trait KVClient {
         V: Into<ByteSequence> + Send;
 
     /// Performs a range query with the specified key.
-    async fn get(&mut self, key: ByteSequence) -> Result<Response<RangeResponse>, Error> {
+    async fn get<K>(&mut self, key: K) -> Result<Response<RangeResponse>, Error>
+    where
+        K: Into<ByteSequence> + Send,
+    {
         self.get_with_options(
-            key,
+            key.into(),
             GetOptions::builder()
                 .namespace(self.options().namespace())
                 .build(),
@@ -73,38 +76,30 @@ pub trait KVClient {
     }
 
     /// Performs a range query to retrieve all key-value pairs in the store.
-    async fn get_all(&mut self) -> Result<Response<RangeResponse>, Error> {
-        let options = GetOptions::builder()
-            .end_key(ByteSequence::from("\0"))
-            .build();
+    async fn get_all(
+        &mut self,
+        options: Option<GetOptions>,
+    ) -> Result<Response<RangeResponse>, Error> {
+        let options = if let Some(mut options) = options {
+            options.end_key = Some(ByteSequence::from("\0"));
+            options
+        } else {
+            GetOptions::builder()
+                .end_key(ByteSequence::from("\0"))
+                .build()
+        };
         self.get_with_options(ByteSequence::from("\0"), options)
             .await
     }
 
     /// Performs a range query with the specified key and options.
-    /// # Arguments
-    /// * `key` - The key to query.
-    /// * `options` - The options to customize the range query.
-    /// # Returns
-    /// * `Result<Response<etcdserverpb::RangeResponse>, error::Error>` - The response containing the range results or an error.
-    /// # Examples
-    /// ```rust
-    /// use rcfe_core::kv::KVClient;
-    /// use rcfe_core::ByteSequence;
-    /// use rcfe_core::error::Error;
-    /// use tonic::Response;
-    /// use rcfe_core::etcdserverpb::RangeResponse;
-    /// use rcfe_core::options::kv::GetOptions;
-    ///
-    /// async fn example<KV: KVClient>(kv_client: &mut KV, key: ByteSequence, options: GetOptions) -> Result<Response<RangeResponse>, Error> {
-    ///     kv_client.get_with_options(key, options).await
-    /// }
-    /// ```
-    async fn get_with_options(
+    async fn get_with_options<K>(
         &mut self,
-        key: ByteSequence,
+        key: K,
         options: GetOptions,
-    ) -> Result<Response<RangeResponse>, Error>;
+    ) -> Result<Response<RangeResponse>, Error>
+    where
+        K: Into<ByteSequence> + Send;
 
     /// Retrieves the KV options associated with this client.
     /// # Returns

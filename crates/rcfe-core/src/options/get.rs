@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::{
     ByteSequence, etcdserverpb,
     etcdserverpb::range_request::{SortOrder, SortTarget},
@@ -23,10 +24,56 @@ pub struct GetOptions {
     namespace: Option<ByteSequence>,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum SortOrderOption {
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "ascend")]
+    Ascend,
+    #[serde(rename = "descend")]
+    Descend,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum SortTargetOption {
+    #[serde(rename = "key")]
+    Key,
+    #[serde(rename = "version")]
+    Version,
+    #[serde(rename = "create")]
+    Create,
+    #[serde(rename = "mod")]
+    Mod,
+    #[serde(rename = "value")]
+    Value,
+}
+
+impl Into<SortOrder> for SortOrderOption {
+    fn into(self) -> SortOrder {
+        match self {
+            SortOrderOption::None => SortOrder::None,
+            SortOrderOption::Ascend => SortOrder::Ascend,
+            SortOrderOption::Descend => SortOrder::Descend,
+        }
+    }
+}
+
+impl Into<SortTarget> for SortTargetOption {
+    fn into(self) -> SortTarget {
+        match self {
+            SortTargetOption::Key => SortTarget::Key,
+            SortTargetOption::Version => SortTarget::Version,
+            SortTargetOption::Create => SortTarget::Create,
+            SortTargetOption::Mod => SortTarget::Mod,
+            SortTargetOption::Value => SortTarget::Value,
+        }
+    }
+}
+
 /// Builder for GetOptions
 #[derive(Debug, Clone, Default)]
 pub struct GetOptionsBuilder {
-    end_key: Option<ByteSequence>,
+    pub(crate) end_key: Option<ByteSequence>,
     limit: Option<i64>,
     revision: Option<i64>,
     sort_order: Option<SortOrder>,
@@ -120,8 +167,11 @@ impl Namespaceable for GetOptions {
 
 impl GetOptionsBuilder {
     /// Sets the end key for range queries.
-    pub fn end_key(mut self, end_key: ByteSequence) -> Self {
-        self.end_key = Some(end_key);
+    pub fn end_key<K>(mut self, end_key: K) -> Self
+    where
+        K: Into<ByteSequence>,
+    {
+        self.end_key = Some(end_key.into());
         self
     }
 
@@ -135,13 +185,19 @@ impl GetOptionsBuilder {
         self
     }
 
-    pub fn sort_order(mut self, sort_order: SortOrder) -> Self {
-        self.sort_order = Some(sort_order);
+    pub fn sort_order<T>(mut self, sort_order: T) -> Self
+    where
+        T: Into<SortOrder>,
+    {
+        self.sort_order = Some(sort_order.into());
         self
     }
 
-    pub fn sort_target(mut self, sort_target: SortTarget) -> Self {
-        self.sort_target = Some(sort_target);
+    pub fn sort_target<T>(mut self, sort_target: T) -> Self
+    where
+        T: Into<SortTarget>,
+    {
+        self.sort_target = Some(sort_target.into());
         self
     }
 

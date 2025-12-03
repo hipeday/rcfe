@@ -17,7 +17,7 @@ pub use crate::{
         client::ClientOptions,
         compact::{CompactOptions, CompactOptionsBuilder},
         delete::{DeleteOptions, DeleteOptionsBuilder},
-        get::{GetOptions, GetOptionsBuilder},
+        get::{GetOptions, GetOptionsBuilder, SortTargetOption, SortOrderOption},
         kv::{KVOptions, KVOptionsBuilder},
         lease::{
             TimeToLiveOptions, TimeToLiveOptionsBuilder,

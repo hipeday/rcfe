@@ -6,7 +6,7 @@ use tokio::test;
 
 #[test]
 async fn test_lease_grant() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut lease_client = client.get_lease_client();
 
     // Grant a lease with a TTL of 5 seconds
@@ -27,7 +27,7 @@ async fn test_lease_grant() -> Result<(), Error> {
 
 #[test]
 async fn test_lease_grant_with_options() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut lease_client = client.get_lease_client();
 
     // Grant a lease with a TTL of 10 seconds using custom options
@@ -51,7 +51,7 @@ async fn test_lease_grant_with_options() -> Result<(), Error> {
 
 #[test]
 async fn test_lease_revoke() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut lease_client = client.get_lease_client();
 
     // Grant a lease to obtain a lease ID
@@ -70,7 +70,7 @@ async fn test_lease_revoke() -> Result<(), Error> {
 
 #[test]
 async fn test_keep_alive() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut lease_client = client.get_lease_client();
 
     let ttl = std::time::Duration::new(5, 0);
@@ -111,7 +111,7 @@ async fn test_keep_alive() -> Result<(), Error> {
 
 #[test]
 async fn test_lease_time_to_live() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut lease_client = client.get_lease_client();
 
     // Grant a lease to obtain a lease ID
@@ -135,7 +135,7 @@ async fn test_lease_time_to_live() -> Result<(), Error> {
 
 #[test]
 async fn test_lease_time_to_live_with_options() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut lease_client = client.get_lease_client();
 
     // Grant a lease to obtain a lease ID

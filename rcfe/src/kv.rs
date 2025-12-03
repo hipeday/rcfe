@@ -58,12 +58,15 @@ impl KVClient for DefaultKVClient {
         Ok(self.inner.put(request).await?)
     }
 
-    async fn get_with_options(
+    async fn get_with_options<K>(
         &mut self,
-        key: ByteSequence,
+        key: K,
         options: GetOptions,
-    ) -> Result<Response<RangeResponse>, Error> {
-        let request = options.to_request(&key);
+    ) -> Result<Response<RangeResponse>, Error>
+    where
+        K: Into<ByteSequence> + Send,
+    {
+        let request = options.to_request(&key.into());
         Ok(self.inner.range(request).await?)
     }
 

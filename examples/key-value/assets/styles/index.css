@@ -1,0 +1,234 @@
+.container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;  /* 增加间距 */
+    align-items: flex-start;
+    max-width: 1400px;  /* 限制最大宽度，防止太宽 */
+    margin: 0 auto;  /* 居中 */
+}
+
+.action-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+    max-width: 500px;  /* 增加表单宽度 */
+    width: 500px;
+}
+
+.results-section {
+    flex: 1;
+    max-width: 900px;
+    background-color: #f9f9fa;  /* 添加背景 */
+    border-radius: 8px;  /* 圆角 */
+    padding: 1rem;  /* 内边距 */
+}
+
+/* 其他样式保持不变 */
+.form {
+    /* 移除 margin: 0 auto; 因为容器已居中 */
+    padding: 1rem;
+    background-color: #f9f9fa;
+    border-radius: 8px;
+}
+
+.form .required::after {
+    content: '*';
+    color: red;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.form input,
+.form select {
+    width: 95%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: white;
+}
+
+/* 按钮区分 */
+.form .btn-primary {
+    margin-top: 1rem;
+    margin-right: 10px;
+    padding: 10px 20px;
+    background-color: #0969da;
+    color: white;
+    border: 1px solid #0969da;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.form .btn-primary:hover {
+    background-color: #0757c2;
+}
+
+.form .btn-secondary {
+    margin-top: 1rem;
+    padding: 10px 20px;
+    background-color: transparent;
+    color: #656d76;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.form .btn-secondary:hover {
+    background-color: #f6f8fa;
+}
+
+/* checkbox */
+.form .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.form .checkbox-wrapper input[type="checkbox"] {
+    display: none;
+}
+
+.form .checkbox-wrapper label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    color: #24292f;
+}
+
+.form .checkbox-wrapper label:before {
+    content: '';
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 24px;
+    margin-right: 10px;
+    transition: background-color 0.3s;
+}
+
+.form .checkbox-wrapper label:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.form .checkbox-wrapper input[type="checkbox"]:checked + label:before {
+    background-color: #0969da;
+}
+
+.form .checkbox-wrapper input[type="checkbox"]:checked + label:after {
+    transform: translateX(20px);
+}
+
+.results {
+    margin-top: 0;  /* 移除顶部边距，因为在 section 内 */
+}
+
+/* 标题居中 */
+h2 {
+    text-align: center;
+    color: #24292f;
+}
+
+.key-value-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    table-layout: fixed;  /* 固定布局，列宽按设置 */
+}
+
+.key-value-table th,
+.key-value-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    word-wrap: break-word;
+    overflow: hidden;  /* 隐藏超出 */
+    text-overflow: ellipsis;  /* 省略号 */
+    white-space: nowrap;
+}
+
+.key-value-table .key-cell {
+    width: 20%;  /* Key 20% */
+}
+
+.key-value-table .value-cell {
+    width: 70%;  /* Value 70% */
+}
+
+.key-value-table .action-cell {
+    width: 10%;  /* Action 10% */
+    text-align: center;
+}
+
+.key-value-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+.key-value-table .action-cell .delete-btn {
+    background-color: transparent;
+    border: none;
+    color: #d73a49;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.2s;
+}
+
+/* 添加 value-cell 鼠标移入如果内容超过宽度悬浮显示 */
+.key-value-table .value-cell:hover {
+    overflow: visible;
+    white-space: normal;
+    background-color: #f0f0f0;
+    z-index: 1;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 12px 16px;
+}
+
+.key-value-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.key-value-table tr:last-child td {
+    border-bottom: none;
+}
+
+.section-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #24292f;
+}
+
+.form textarea {
+    width: 95%;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    resize: vertical;
+    background-color: white;
+}

@@ -3,7 +3,10 @@ resolver = "2"
 members = [
     "rcfe", # Main etcd client library
     "crates/rcfe-core", # Core library for RCFE functionality
-    "crates/rcfe-test", # Test utilities and integration tests
+    # Test utilities and integration tests
+    "crates/rcfe-test",
+    # Example applications
+    "examples/key-value", "examples/example-core",
 ]
 
 [workspace.package]
@@ -32,3 +35,18 @@ tonic = "0.14.2"
 thiserror = "2.0.17"
 tonic-prost-build = "0.14.2"
 dotenvy = "0.15.7"
+
+# Logging
+tracing = "0.1.43"
+tracing-subscriber = "0.3.22"
+
+# For examples
+axum = { version = "0.8.7", features = ["macros"] }
+askama = { version = "0.14.0" }
+example-core = { path = "examples/example-core", features = ["tracing-subscriber"] }
+serde = { version = "1.0.228", features = ["derive"] }
+filters = "0.4.0"
+serde_urlencoded = "0.7.1"
+fluent-templates = "0.13.2"
+tower-http = { version = "0.6.7", features = ["fs", "trace"] }
+serde_with = "3.16.1"

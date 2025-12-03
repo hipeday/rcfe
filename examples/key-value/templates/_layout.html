@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="{{ self.lang() }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- 动态标题 -->
+  <title>{% if let Some(title) = self.title() %} {{ title }} {% endif %} - {% if let Some(subtitle) = self.subtitle() %} {{ subtitle }} {% endif %}</title>
+
+  <!-- 引入全局 CSS -->
+  <link rel="stylesheet" href="/assets/_layout.css">
+</head>
+<body>
+<!-- 页面头部 -->
+<header>
+  <h1>{% block header %}{{ header }}{% endblock %}</h1>
+
+  <!-- 语言选择器 -->
+  <div class="lang-selector">
+    <span>{{ self.select_language_label() }}:</span>
+    {% for lang_code in self.languages() %}
+    <a href="{{ self.href_with_lang(lang_code) }}" class="lang-btn {% if lang_code == self.lang() %}active{% endif %}">{{ lang_code.local() }}</a>
+    {% endfor %}
+  </div>
+</header>
+
+<!-- 全局导航栏 -->
+<nav>
+  <a href="{{ home_url }}">{{ self.home_label() }}</a>
+</nav>
+
+<!-- 主内容区域 -->
+<main>
+  {% block content %}
+  <!-- 子页面内容插入这里 -->
+  {% endblock %}
+</main>
+</body>
+</html>

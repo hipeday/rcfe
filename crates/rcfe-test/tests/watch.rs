@@ -5,7 +5,7 @@ use common::*;
 
 #[tokio::test]
 async fn test_watch() -> Result<(), Error> {
-    let client = get_client().await?;
+    let client = get_client(None).await?;
     let mut watch_client = client.get_watch_client();
 
     let watch_request = WatchRequestType::Create(

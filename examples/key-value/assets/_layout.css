@@ -1,0 +1,71 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+}
+
+header {
+  background-color: #f8f9fa;  /* 浅灰背景 */
+  color: #212529;  /* 黑色文字 */
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);  /* 可选：轻微阴影 */
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;  /* 添加垂直居中 */
+  background-color: #333;
+  height: 50px;  /* 可选：固定高度，避免高度不均 */
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 1rem;
+  display: block;
+  line-height: 1.2;  /* 统一行高 */
+  font-size: 16px;  /* 统一字体大小 */
+}
+
+nav a:hover {
+  background-color: #575757;
+}
+
+main {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* 语言选择器样式 */
+.lang-selector {
+  display: flex;
+  align-items: center;
+  gap: 15px;  /* 增加间距，让布局更宽松 */
+  margin-bottom: 10px;
+  font-size: 14px;  /* 小字体，简洁 */
+}
+
+.lang-btn {
+  text-decoration: none;  /* 默认无下划线 */
+  color: #666;  /* 灰色，简约 */
+  padding: 4px 8px;  /* 小 padding */
+  transition: color 0.2s;  /* 轻微过渡 */
+}
+
+.lang-btn:hover {
+  color: #333;  /* 深灰，hover 时变深 */
+  text-decoration: underline;  /* hover 加下划线 */
+}
+
+.lang-btn.active {
+  color: #000;  /* 黑色表示当前语言 */
+  font-weight: 500;  /* 轻微加粗 */
+}

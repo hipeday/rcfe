@@ -1,0 +1,172 @@
+{% extends "_layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="/assets/styles/index.css">
+
+<h2>{{ form_title }}</h2>
+<div class="container">
+
+  <div class="action-section">
+    <div class="put-wrapper">
+      <h3 class="section-title">{{put_section_title}}</h3>
+      <form method="post" action="/put" class="form" id="put-form">
+        <div class="form-item-wrapper">
+          <label class="required" for="put-key">{{ put_key_label }}</label>
+          <input type="text" id="put-key" name="key" placeholder="{{ put_key_placeholder }}" required>
+        </div>
+
+        <div class="form-item-wrapper">
+          <label class="required" for="put-value">{{ put_value_label }}</label>
+          <textarea id="put-value" name="value" rows="4" placeholder="{{ put_value_placeholder }}"></textarea>
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="put-lease">{{ lease_label }}</label>
+          <input type="number" id="put-lease" name="lease" placeholder="{{ lease_placeholder }}">
+        </div>
+
+        <div class="checkbox-wrapper form-item-wrapper">
+          <input type="checkbox" id="prev_kv" name="prev_kv">
+          <label for="prev_kv">{{ prev_kv_label }}</label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">{{ submit_button }}</button>
+          <button type="reset" class="btn-secondary">{{ reset_button }}</button>
+        </div>
+      </form>
+    </div>
+    <div class="range-wrapper">
+      <h3 class="section-title">{{put_section_title}}</h3>
+      <form method="get" class="form" id="range-form">
+        <div class="checkbox-wrapper form-item-wrapper">
+          <input type="checkbox" id="query-all" name="query_all" {% if query_all %}checked{% endif %}>
+          <label for="query-all">{{ query_all_label }}</label>
+        </div>
+
+        <div id="key-wrapper" class="form-item-wrapper">
+          <label class="required" for="key">{{ key_label }}</label>
+          <input autocomplete="false" type="text" id="key" name="key" placeholder="{{ key_placeholder }}"
+                 value="{% if let Some(key_value) = key_value %}{{ key_value }}{% endif %}" required>
+        </div>
+
+        <div class="checkbox-wrapper form-item-wrapper" id="prefix-wrapper">
+          <input type="checkbox" id="prefix" name="prefix" {% if prefixed_value %}checked{% endif %}>
+          <label for="prefix">{{ prefixed_label }}</label>
+        </div>
+
+        <div id="range-end-wrapper" class="form-item-wrapper">
+          <label for="range_end">{{ range_end_label }}</label>
+          <input type="text" id="range_end" name="range_end" placeholder="{{ range_end_placeholder }}">
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="limit">{{ limit_label }}</label>
+          <input type="number" id="limit" name="limit"
+                 value="{% if let Some(limit) = limit_value %}{{ limit }}{% endif %}"
+                 placeholder="{{ limit_placeholder }}">
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="revision">{{ revision_label }}</label>
+          <input type="number" id="revision" name="revision"
+                 value="{% if let Some(revision) = revision_value %}{{ revision }}{% endif %}"
+                 placeholder="{{ limit_placeholder }}" placeholder="{{ revision_placeholder }}">
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="sort-order">{{ sort_order_label }}</label>
+          <select id="sort-order" name="sort_order">
+            <option value="ascend" {% if is_sort_order_ascend %}selected{% endif %}>{{ sort_order_ascend }}</option>
+            <option value="descend" {% if is_sort_order_ascend %}selected{% endif %}>{{ sort_order_descend }}</option>
+            <option value="none" {% if is_sort_order_none %}selected{% endif %}>{{ sort_order_none }}</option>
+          </select>
+        </div>
+
+        <div id="sort-target-wrapper" style="display: none;" class="form-item-wrapper">
+          <label for="sort_target">{{ sort_target_label }}</label>
+          <select id="sort_target" name="sort_target">
+            <option value="key" {% if is_sort_target_key %}selected{% endif %}>Key</option>
+            <option value="version" {% if is_sort_target_version %}selected{% endif %}>Version</option>
+            <option value="create" {% if is_sort_target_create %}selected{% endif %}>Create</option>
+            <option value="mod" {% if is_sort_target_mod %}selected{% endif %}>Mod</option>
+            <option value="value" {% if is_sort_target_value %}selected{% endif %}>Value</option>
+          </select>
+        </div>
+
+        <div class="checkbox-wrapper form-item-wrapper">
+          <input type="checkbox" id="serializable" name="serializable" {% if serializable_value %}checked{% endif %}>
+          <label for="serializable">{{ serializable_label }}</label>
+        </div>
+
+        <div class="checkbox-wrapper form-item-wrapper">
+          <input type="checkbox" id="keys_only" name="keys_only" {% if keys_only_value %}checked{% endif %}>
+          <label for="keys_only">{{ keys_only_label }}</label>
+        </div>
+
+        <div class="checkbox-wrapper form-item-wrapper">
+          <input type="checkbox" id="count_only" name="count_only" {% if count_only_value %}checked{% endif %}>
+          <label for="count_only">{{ count_only_label }}</label>
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="min_mod_revision">{{ min_mod_revision_label }}</label>
+          <input type="number" id="min_mod_revision" name="min_mod_revision"
+                 placeholder="{{min_mod_revision_placeholder}}">
+        </div>
+        <div class="form-item-wrapper">
+          <label for="max_mod_revision">{{ max_mod_revision_label }}</label>
+          <input type="number" id="max_mod_revision" name="max_mod_revision"
+                 placeholder="{{max_mod_revision_placeholder}}">
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="min_create_revision">{{ min_create_revision_label }}</label>
+          <input type="number" id="min_create_revision" name="min_create_revision"
+                 placeholder="{{min_create_revision_placeholder}}">
+        </div>
+
+        <div class="form-item-wrapper">
+          <label for="max_create_revision">{{ max_create_revision_label }}</label>
+          <input type="number" id="max_create_revision" name="max_create_revision"
+                 placeholder="{{max_create_revision_placeholder}}">
+        </div>
+
+        <button type="submit" class="btn-primary">{{submit_button}}</button>
+        <button type="reset" class="btn-secondary">{{reset_button}}</button>
+      </form>
+    </div>
+  </div>
+
+  {% if let Some(results) = results %}
+  <div class="results-section">
+    <div class="results">
+      <h3 class="section-title">{{ result_header }}</h3>
+      <p>{{ total_label }}: {{ total }}</p>  <!-- 显示总数 -->
+      <table class="key-value-table">
+        <thead>
+        <tr>
+          <th class="key-cell">{{ result_key_label }}</th>
+          <th class="value-cell">{{ result_value_label }}</th>
+          <th class="action-cell">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for (key, value) in results %}
+        <tr>
+          <td class="key-cell">{{ key }}</td>
+          <td class="value-cell">{{ value }}</td>
+          <td class="action-cell">
+            <button class="delete-btn" data-key="{{ key }}">删除</button>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script src="/assets/scripts/index.js"></script>
+{% endblock %}
